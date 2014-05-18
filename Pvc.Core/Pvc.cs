@@ -43,6 +43,12 @@ namespace PvcCore
             return this.Task(taskName, () => { });
         }
 
+        public PvcPipe Source(string directory, string pattern)
+        {
+            var filePaths = Directory.GetFiles(directory, pattern, SearchOption.AllDirectories);
+            return Source(filePaths);
+        }
+
         public PvcPipe Source(params string[] filePaths)
         {
             var streams = filePaths.Select(x => new PvcStream(new FileStream(x, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)).As(x));
