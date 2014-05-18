@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Minimatch;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
@@ -43,10 +44,18 @@ namespace PvcCore
             return this.Task(taskName, () => { });
         }
 
-        public PvcPipe Source(params string[] filePaths)
+        public PvcPipe Source(params string[] globs)
         {
-            var streams = filePaths.Select(x => new PvcStream(new FileStream(x, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)).As(x));
+            var streams = FilterPaths(globs).Select(x => new PvcStream(new FileStream(x, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)).As(x));
             return new PvcPipe(streams);
+        }
+
+        internal IEnumerable<string> FilterPaths(IEnumerable<string> globs)
+        {
+            var miniMatches = globs.Select(g => new Minimatcher(g));
+            var allPaths = Directory.EnumerateFiles(Directory.GetCurrentDirectory());
+
+            return miniMatches.SelectMany(m => m.Filter(allPaths));
         }
 
         public void Start(string taskName)
