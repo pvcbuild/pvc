@@ -159,7 +159,7 @@ namespace PvcCore
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            Console.WriteLine("Starting [{0}] ...", taskName.Magenta());
+            Console.WriteLine("Starting '{0}' ...", taskName.Magenta());
 
             return stopwatch;
         }

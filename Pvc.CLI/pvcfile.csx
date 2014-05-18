@@ -4,7 +4,6 @@ pvc.Task("default", () => {
 
 pvc.Task("make-coffee", (done) => {
 	System.Console.WriteLine("Made coffee. " + DateTime.Now.Millisecond);
-	throw new Exception("halp twalf");
 	done();
 });
 
