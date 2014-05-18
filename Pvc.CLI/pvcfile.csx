@@ -8,3 +8,8 @@ pvc.Task("make-coffee", (done) => {
 
 pvc.Task("sync-test", () => System.Console.WriteLine("sync test"));
 pvc.Task("dont-run-me", () => System.Console.WriteLine("wat"));
+
+pvc.Task("default", () => {
+	pvc.Source(@"C:\Projects\FluentAutomation\FluentAutomation.sln")
+	   .Pipe(new PvcMSBuild("Clean;Build", "Debug"));
+});
