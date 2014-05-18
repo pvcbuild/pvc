@@ -1,4 +1,5 @@
 ﻿using Common.Logging;
+using PvcCore;
 using ScriptCs;
 using ScriptCs.Contracts;
 using System;
@@ -24,12 +25,11 @@ namespace Pvc.CLI
         private ScriptServices CreateScriptCsEnv()
         {
             ILog logger = new Common.Logging.Simple.NoOpLogger();
-            logger = new Common.Logging.Simple.ConsoleOutLogger("[PVC]", Common.Logging.LogLevel.All, true, false, true, "hh:mm");
+            //logger = new Common.Logging.Simple.ConsoleOutLogger("[PVC]", Common.Logging.LogLevel.All, true, false, true, "hh:mm");
             var console = new ScriptCs.ScriptConsole();
             return new ScriptCs.ScriptServicesBuilder(console, logger)
                 .ScriptEngine<ScriptCs.Engine.Roslyn.RoslynScriptInMemoryEngine>()
                 .ScriptName(this.fileName)
-                .Repl(true)
                 .Build();
         }
 
@@ -50,7 +50,10 @@ namespace Pvc.CLI
             var result = this.services.Executor.ExecuteScript(string.Format(script, File.ReadAllText(this.fileName), commandName));
             if (result.ExecuteExceptionInfo != null)
             {
-                throw result.ExecuteExceptionInfo.SourceException;
+                if (result.ExecuteExceptionInfo.SourceException.GetType() == typeof(PvcException))
+                    throw result.ExecuteExceptionInfo.SourceException.InnerException;
+                else
+                    throw result.ExecuteExceptionInfo.SourceException;
             }
         }
     }

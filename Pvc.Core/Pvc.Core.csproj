@@ -39,7 +39,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Lib\Colors\ColorsExtension.cs" />
+    <Compile Include="Lib\Colors\EscapeSequencer.cs" />
+    <Compile Include="Lib\TimeSpanHumanizeExtensions.cs" />
     <Compile Include="Pvc.cs" />
+    <Compile Include="PvcConsole.cs" />
     <Compile Include="PvcDependencyGraph.cs" />
     <Compile Include="PvcException.cs" />
     <Compile Include="PvcPlugin.cs" />

@@ -1,25 +1,30 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Humanizer;
+using System.Text.RegularExpressions;
+using Edokan.KaiZen.Colors;
 
 namespace PvcCore
 {
     public class Pvc
     {
-        internal readonly ConcurrentDictionary<string, object> locks = new ConcurrentDictionary<string, object>();
-
-        public readonly List<PvcTask> LoadedTasks = null;
-        public readonly List<string> CompletedTasks = null;
+        public readonly List<PvcTask> LoadedTasks;
+        public readonly List<string> CompletedTasks;
+        private readonly ConcurrentDictionary<string, object> locks;
 
         public Pvc()
         {
             this.LoadedTasks = new List<PvcTask>();
             this.CompletedTasks = new List<string>();
+
+            this.locks = new ConcurrentDictionary<string, object>();
         }
 
         public PvcTask Task(string taskName, Action taskAction)
@@ -73,9 +78,16 @@ namespace PvcCore
                 }
             }
 
-            foreach (var executionPath in executionPaths.AsParallel())
+            try
             {
-                this.RunTasks(executionPath.ToArray());
+                foreach (var executionPath in executionPaths.AsParallel())
+                {
+                    this.RunTasks(executionPath.ToArray());
+                }
+            }
+            catch (AggregateException ex)
+            {
+                throw new PvcException(ex.InnerException);
             }
         }
 
@@ -88,36 +100,65 @@ namespace PvcCore
                 // lock on task name to avoid multiple threads doing the work
                 lock (locks[task.taskName])
                 {
-                    if (CompletedTasks.Contains(task.taskName))
-                        continue;
-
-                    if (task.isAsync)
+                    try
                     {
-                        // Start callback chain for async methods, lock on task
-                        Monitor.Enter(locks[task.taskName]);
-                        var callbackCalled = false;
-                        task.ExecuteAsync(() =>
-                        {
-                            CompletedTasks.Add(task.taskName);
-                            this.RunTasks(tasks.Skip(i + 1).ToArray());
-                            callbackCalled = true;
-                        });
+                        if (CompletedTasks.Contains(task.taskName))
+                            continue;
 
-                        // Keep app running
-                        while (callbackCalled == false)
+                        if (task.isAsync)
                         {
-                            Thread.Sleep(50);
+                            // Start callback chain for async methods, lock on task
+                            Monitor.Enter(locks[task.taskName]);
+                            var callbackCalled = false;
+
+                            var stopwatch = this.StartTaskStatus(task.taskName);
+                            task.ExecuteAsync(() =>
+                            {
+                                this.FinishTaskStatus(task.taskName, stopwatch);
+                                CompletedTasks.Add(task.taskName);
+
+                                if (i != tasks.Length - 1)
+                                    this.RunTasks(tasks.Skip(i + 1).ToArray());
+
+                                callbackCalled = true;
+                            });
+
+                            // Keep app running while async task completes
+                            while (callbackCalled == false) { }
+                            break;
                         }
+                        else
+                        {
+                            var stopwatch = this.StartTaskStatus(task.taskName);
 
-                        break;
+                            task.Execute();
+                            CompletedTasks.Add(task.taskName);
+
+                            this.FinishTaskStatus(task.taskName, stopwatch);
+                        }
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        task.Execute();
-                        CompletedTasks.Add(task.taskName);
+                        throw new PvcException(ex);
                     }
                 }
             }
+        }
+
+        private Stopwatch StartTaskStatus(string taskName)
+        {
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            Console.WriteLine("Starting [{0}] ...", taskName.Magenta());
+
+            return stopwatch;
+        }
+
+        private void FinishTaskStatus(string taskName, Stopwatch stopwatch)
+        {
+            stopwatch.Stop();
+            Console.WriteLine("Finished '{0}' in {1}", taskName.Magenta(), stopwatch.Elapsed.Humanize().White());
         }
     }
 }

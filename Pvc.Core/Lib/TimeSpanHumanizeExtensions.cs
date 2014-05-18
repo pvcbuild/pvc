@@ -1,0 +1,100 @@
+﻿/// Based on code borrowed from Humanizer by Mehdi Khalili
+/// github: https://github.com/MehdiK/Humanizer
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Humanizer
+{
+    /// <summary>
+    /// Humanizes TimeSpan into human readable form
+    /// </summary>
+    public static class TimeSpanHumanizeExtensions
+    {
+        /// <summary>
+        /// Turns a TimeSpan into a human readable form. E.g. 1 day.
+        /// </summary>
+        /// <param name="timeSpan"></param>
+        /// <param name="precision">The maximum number of time units to return. Defaulted is 1 which means the largest unit is returned</param>
+        /// <returns></returns>
+        public static string Humanize(this TimeSpan timeSpan, int precision = 1)
+        {
+            var result = new StringBuilder();
+            for (int i = 0; i < precision; i++)
+            {
+                var timePart = GetTimePart(timeSpan);
+
+                if (result.Length > 0)
+                    result.Append(", ");
+
+                result.Append(timePart);
+
+                timeSpan = TakeOutTheLargestUnit(timeSpan);
+                if (timeSpan == TimeSpan.Zero)
+                    break;
+            }
+
+            return result.ToString();
+        }
+
+        private static string GetTimePart(TimeSpan timespan)
+        {
+            if (timespan.Minutes >= 1)
+            {
+                if (timespan.Seconds >= 1)
+                {
+                    return string.Format("{0} minute{1}, {2} second{3}", timespan.Minutes, timespan.Minutes == 1 ? "" : "s", timespan.Seconds, timespan.Seconds == 1 ? "" : "s");
+                }
+
+                return string.Format("{0} minute{1}", timespan.Minutes, timespan.Minutes == 1 ? "" : "s");
+            }
+
+            if (timespan.Seconds >= 1)
+            {
+                return string.Format("{0}.{1} second{2}", timespan.Seconds, 1000 / timespan.Milliseconds, timespan.Seconds == 1 ? "" : "s");
+            }
+
+            if (timespan.Milliseconds >= 1)
+            {
+                return string.Format("{0} ms", timespan.Milliseconds);
+            }
+
+            return "0";
+        }
+
+        static TimeSpan TakeOutTheLargestUnit(TimeSpan timeSpan)
+        {
+            return timeSpan - LargestUnit(timeSpan);
+        }
+
+        static TimeSpan LargestUnit(TimeSpan timeSpan)
+        {
+            var days = timeSpan.Days;
+            if (days >= 7)
+                return TimeSpan.FromDays((days / 7) * 7);
+            if (days >= 1)
+                return TimeSpan.FromDays(days);
+
+            var hours = timeSpan.Hours;
+            if (hours >= 1)
+                return TimeSpan.FromHours(hours);
+
+            var minutes = timeSpan.Minutes;
+            if (minutes >= 1)
+                return TimeSpan.FromMinutes(minutes);
+
+            var seconds = timeSpan.Seconds;
+            if (seconds >= 1)
+                return TimeSpan.FromSeconds(seconds);
+
+            var milliseconds = timeSpan.Milliseconds;
+            if (milliseconds >= 1)
+                return TimeSpan.FromMilliseconds(milliseconds);
+
+            return TimeSpan.Zero;
+        }
+    }
+}

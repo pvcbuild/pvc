@@ -31,12 +31,19 @@ namespace PvcCore
 
         public void ExecuteAsync(Action callback)
         {
-            this.asyncTaskAction(callback);
+            PvcConsole.ThreadTask = this.taskName;
+            this.asyncTaskAction(() =>
+            {
+                PvcConsole.ThreadTask = null;
+                callback();
+            });
         }
 
         public void Execute()
         {
+            PvcConsole.ThreadTask = this.taskName;
             taskAction();
+            PvcConsole.ThreadTask = null;
         }
 
         public PvcTask Requires(params string[] taskNames)
