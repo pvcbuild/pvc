@@ -57,9 +57,12 @@ namespace PvcCore
 
         internal IEnumerable<string> FilterPaths(IEnumerable<string> globs)
         {
-            var miniMatches = globs.Select(g => new Minimatcher(g));
-            var allPaths = Directory.EnumerateFiles(Directory.GetCurrentDirectory());
-
+            var allPaths = Directory.EnumerateFiles(Directory.GetCurrentDirectory(), "*", SearchOption.AllDirectories).Select(x => PvcUtil.PathRelativeToCurrentDirectory(x));
+            var miniMatches = globs.Select(g => new Minimatcher(g, new Options
+            {
+                AllowWindowsPaths = true
+            }));
+            
             return miniMatches.SelectMany(m => m.Filter(allPaths));
         }
 

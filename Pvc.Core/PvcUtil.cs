@@ -45,5 +45,24 @@ namespace PvcCore
             var process = Process.Start(startInfo);
             return new Tuple<Stream, Stream>(process.StandardOutput.BaseStream, process.StandardError.BaseStream);
         }
+
+        public static string PathRelativeToCurrentDirectory(string absolutePath)
+        {
+            string currentDir = Environment.CurrentDirectory;
+            DirectoryInfo directory = new DirectoryInfo(currentDir);
+            FileInfo file = new FileInfo(absolutePath);
+
+            string fullDirectory = directory.FullName;
+            string fullFile = file.FullName;
+
+            if (fullFile.StartsWith(fullDirectory))
+            {
+                // The +1 is to avoid the directory separator
+                return fullFile.Substring(fullDirectory.Length + 1);
+            }
+
+            // could not generate a relative path, let the abs path through?
+            return absolutePath;
+        }
     }
 }

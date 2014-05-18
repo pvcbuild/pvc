@@ -92,7 +92,11 @@ namespace PvcCore
             foreach (var stream in this.streams)
             {
                 var streamContents = new StreamReader(stream).ReadToEnd();
-                File.WriteAllText(Path.Combine(outputPath, stream.StreamName), streamContents);
+                var fileSavePath = Path.Combine(outputPath, stream.StreamName);
+
+                // verify directory exists for write
+                new FileInfo(fileSavePath).Directory.Create();
+                File.WriteAllText(fileSavePath, streamContents);
             }
 
             this.resetStreamPositions();
