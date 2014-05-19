@@ -12,7 +12,6 @@ namespace Pvc.CLI
         static void Main(string[] args)
         {
             PvcConsole.Configure();
-            Directory.SetCurrentDirectory(@"C:\users\stirno\Source\Repos\test");
 
             try
             {
