@@ -46,7 +46,7 @@ namespace Pvc.CLI
             this.services.Executor.AddReferences(assemblies.ToArray());
             this.services.Executor.ImportNamespaces("PvcCore");
 
-            if (assemblies.Any(x => x.Contains("Pvc.") && x != "Pvc.Core"))
+            if (assemblies.Any(x => x.Contains("Pvc.") && !x.Contains("Pvc.Core")))
                 this.services.Executor.ImportNamespaces("PvcPlugins");
 
             var script =
