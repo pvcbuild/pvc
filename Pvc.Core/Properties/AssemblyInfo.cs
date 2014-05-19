@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("PvcCore")]
+[assembly: AssemblyTitle("Pvc.Core")]
 [assembly: AssemblyDescription("PVC Build Engine")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Brandon Stirnaman")]
-[assembly: AssemblyProduct("PvcCore")]
+[assembly: AssemblyProduct("Pvc.Core")]
 [assembly: AssemblyCopyright("Copyright ©  2014")]
 [assembly: AssemblyTrademark("Brandon Stirnaman")]
 [assembly: AssemblyCulture("")]

@@ -49,9 +49,12 @@ namespace PvcCore
             return this.Task(taskName, () => { });
         }
 
-        public PvcPipe Source(params string[] globs)
+        public PvcPipe Source(params string[] inputs)
         {
-            var streams = FilterPaths(globs).Select(x => new PvcStream(new FileStream(x, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)).As(x));
+            var globs = inputs.Where(x => Regex.IsMatch(x, @"(\*\!)"));
+            var streams = inputs.Except(globs).Concat(FilterPaths(globs))
+                .Select(x => new PvcStream(new FileStream(x, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)).As(x));
+
             return new PvcPipe(streams);
         }
 

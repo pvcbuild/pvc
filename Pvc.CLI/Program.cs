@@ -42,10 +42,10 @@ namespace Pvc.CLI
                         Console.WriteLine(stackTraceLine.DarkGrey());
                 }
 
-                var threadTask = PvcConsole.ThreadTask.Magenta();
+                var threadTask = PvcConsole.ThreadTask;
                 PvcConsole.ThreadTask = null;
 
-                Console.WriteLine("Task '{0}' failed with an exception", threadTask.Magenta());
+                Console.WriteLine("Task {0}failed with an exception", threadTask != null ? "'" + threadTask.Magenta() + "' " : "");
             }
         }
     }

@@ -69,6 +69,9 @@
     <Reference Include="Pvc.MSBuild">
       <HintPath>..\..\pvc-msbuild\src\bin\Debug\Pvc.MSBuild.dll</HintPath>
     </Reference>
+    <Reference Include="Pvc.NuGet">
+      <HintPath>..\..\pvc-nuget\src\bin\Debug\Pvc.NuGet.dll</HintPath>
+    </Reference>
     <Reference Include="Roslyn.Compilers">
       <HintPath>..\Pvc.Core\packages\Roslyn.Compilers.Common.1.2.20906.2\lib\net45\Roslyn.Compilers.dll</HintPath>
     </Reference>

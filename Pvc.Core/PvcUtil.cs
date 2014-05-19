@@ -64,5 +64,35 @@ namespace PvcCore
             // could not generate a relative path, let the abs path through?
             return absolutePath;
         }
+
+        public static string FindBinaryInPath(params string[] binaries)
+        {
+            var searchBinaries = new List<string>();
+            foreach (var binary in binaries)
+            {
+                if (File.Exists(binary))
+                    return Path.GetFullPath(binary);
+
+                if (Path.GetDirectoryName(binary) == string.Empty)
+                    searchBinaries.Add(binary);
+            }
+
+            foreach (string test in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(';'))
+            {
+                string path = test.Trim();
+
+                foreach (var searchBinary in searchBinaries)
+                {
+                    var binary = Environment.ExpandEnvironmentVariables(searchBinary);
+                    if (!String.IsNullOrEmpty(path) && File.Exists(path = Path.Combine(path, binary)))
+                        return Path.GetFullPath(path);
+                }
+            }
+
+            if (binaries.Length == 1)
+                throw new FileNotFoundException("Unable to find requested binary in PATH: " + binaries[0]);
+            else
+                throw new FileNotFoundException("Unable to find any of the requested binaries in PATH: " + string.Join(", ", binaries));
+        }
     }
 }

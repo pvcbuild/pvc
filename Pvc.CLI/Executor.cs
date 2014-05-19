@@ -39,7 +39,8 @@ namespace Pvc.CLI
             this.services.Executor.AddReferenceAndImportNamespaces(new Type[] {
                 typeof(PvcCore.Pvc),
                 typeof(PvcPlugins.PvcMSBuild),
-                typeof(PvcPlugins.PvcLess)
+                typeof(PvcPlugins.PvcLess),
+                typeof(PvcPlugins.PvcNuGet)
             });
 
             var script =
@@ -48,10 +49,13 @@ namespace Pvc.CLI
                 "pvc.Start(\"{1}\");";
 
             var result = this.services.Executor.ExecuteScript(string.Format(script, File.ReadAllText(this.fileName), commandName));
+            if (result.CompileExceptionInfo != null)
+                throw result.CompileExceptionInfo.SourceException;
+
             if (result.ExecuteExceptionInfo != null)
             {
                 if (result.ExecuteExceptionInfo.SourceException.GetType() == typeof(PvcException))
-                    throw result.ExecuteExceptionInfo.SourceException.InnerException;
+                    throw result.ExecuteExceptionInfo.SourceException.InnerException ?? result.ExecuteExceptionInfo.SourceException;
                 else
                     throw result.ExecuteExceptionInfo.SourceException;
             }
