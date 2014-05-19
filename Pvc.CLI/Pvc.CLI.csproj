@@ -47,9 +47,6 @@
     <Reference Include="Common.Logging.Log4Net">
       <HintPath>..\Pvc.Core\packages\Common.Logging.Log4Net.2.0.1\lib\net20\Common.Logging.Log4Net.dll</HintPath>
     </Reference>
-    <Reference Include="dotless.ClientOnly">
-      <HintPath>..\..\pvc-less\src\bin\Debug\dotless.ClientOnly.dll</HintPath>
-    </Reference>
     <Reference Include="log4net">
       <HintPath>..\Pvc.Core\packages\log4net.1.2.10\lib\2.0\log4net.dll</HintPath>
     </Reference>
@@ -62,15 +59,6 @@
     <Reference Include="NuGet.Core, Version=2.7.40808.167, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Pvc.Core\packages\NuGet.Core.2.7.0\lib\net40-Client\NuGet.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="Pvc.Less">
-      <HintPath>..\..\pvc-less\src\bin\Debug\Pvc.Less.dll</HintPath>
-    </Reference>
-    <Reference Include="Pvc.MSBuild">
-      <HintPath>..\..\pvc-msbuild\src\bin\Debug\Pvc.MSBuild.dll</HintPath>
-    </Reference>
-    <Reference Include="Pvc.NuGet">
-      <HintPath>..\..\pvc-nuget\src\bin\Debug\Pvc.NuGet.dll</HintPath>
     </Reference>
     <Reference Include="Roslyn.Compilers">
       <HintPath>..\Pvc.Core\packages\Roslyn.Compilers.Common.1.2.20906.2\lib\net45\Roslyn.Compilers.dll</HintPath>

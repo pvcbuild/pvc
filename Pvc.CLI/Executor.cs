@@ -35,13 +35,19 @@ namespace Pvc.CLI
 
         public void Execute(string commandName)
         {
-            this.services.Executor.Initialize(new string[] { }, new IScriptPack[] { });
-            this.services.Executor.AddReferenceAndImportNamespaces(new Type[] {
-                typeof(PvcCore.Pvc),
-                typeof(PvcPlugins.PvcMSBuild),
-                typeof(PvcPlugins.PvcLess),
-                typeof(PvcPlugins.PvcNuGet)
-            });
+            var currentDirectory = Directory.GetCurrentDirectory();
+            var packages = this.services.PackageAssemblyResolver.GetPackages(currentDirectory);
+            this.services.InstallationProvider.Initialize();
+            this.services.PackageInstaller.InstallPackages(packages);
+
+            var assemblies = this.services.AssemblyResolver.GetAssemblyPaths(currentDirectory);
+            var scriptPacks = this.services.ScriptPackResolver.GetPacks();
+            this.services.Executor.Initialize(assemblies, scriptPacks);
+            this.services.Executor.AddReferences(assemblies.ToArray());
+            this.services.Executor.ImportNamespaces("PvcCore");
+
+            if (assemblies.Any(x => x.Contains("Pvc.") && x != "Pvc.Core"))
+                this.services.Executor.ImportNamespaces("PvcPlugins");
 
             var script =
                 "var pvc = new Pvc();" +
