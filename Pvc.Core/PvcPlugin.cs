@@ -1,13 +1,24 @@
-﻿using System;
+﻿using PvcCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PvcCore
+namespace PvcPlugins
 {
     public abstract class PvcPlugin
     {
+        public static List<string> registeredNamespaces = new List<string>(new[] {
+            "PvcCore",
+            "PvcPlugins"
+        });
+
+        public virtual void RegisterNamespaces(params string[] namespaces)
+        {
+            PvcPlugin.registeredNamespaces.AddRange(namespaces.Except(registeredNamespaces));
+        }
+
         public abstract IEnumerable<PvcStream> Execute(IEnumerable<PvcStream> inputStreams);
     }
 }

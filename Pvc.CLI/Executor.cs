@@ -1,5 +1,6 @@
 ﻿using Common.Logging;
 using PvcCore;
+using PvcPlugins;
 using ScriptCs;
 using ScriptCs.Contracts;
 using System;
@@ -44,10 +45,8 @@ namespace Pvc.CLI
             var scriptPacks = this.services.ScriptPackResolver.GetPacks();
             this.services.Executor.Initialize(assemblies, scriptPacks);
             this.services.Executor.AddReferences(assemblies.ToArray());
-            this.services.Executor.ImportNamespaces("PvcCore");
 
-            if (assemblies.Any(x => x.Contains("Pvc.") && !x.Contains("Pvc.Core")))
-                this.services.Executor.ImportNamespaces("PvcPlugins");
+            this.services.Executor.ImportNamespaces(PvcPlugin.registeredNamespaces.ToArray());
 
             var script =
                 "var pvc = new Pvc();" +
