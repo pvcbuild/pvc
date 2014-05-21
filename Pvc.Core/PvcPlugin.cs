@@ -16,7 +16,8 @@ namespace PvcPlugins
 
         public virtual void RegisterNamespaces(params string[] namespaces)
         {
-            PvcPlugin.registeredNamespaces.AddRange(namespaces.Except(registeredNamespaces));
+            namespaces = namespaces.Except(new[] { "Pvc" }.Concat(registeredNamespaces)).ToArray();
+            PvcPlugin.registeredNamespaces.AddRange(namespaces);
         }
 
         public abstract IEnumerable<PvcStream> Execute(IEnumerable<PvcStream> inputStreams);

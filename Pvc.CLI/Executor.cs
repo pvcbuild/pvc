@@ -3,6 +3,7 @@ using PvcCore;
 using PvcPlugins;
 using ScriptCs;
 using ScriptCs.Contracts;
+using ScriptCs.Hosting.Package;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -30,6 +31,10 @@ namespace Pvc.CLI
             var console = new ScriptCs.ScriptConsole();
             return new ScriptCs.ScriptServicesBuilder(console, logger)
                 .ScriptEngine<ScriptCs.Engine.Roslyn.RoslynScriptInMemoryEngine>()
+                .AssemblyResolver<PvcAssemblyResolver>()
+                .PackageAssemblyResolver<PvcPackageAssemblyResolver>()
+                .PackageContainer<PvcPackageContainer>()
+                .InstallationProvider<PvcNugetInstallationProvider>()
                 .ScriptName(this.fileName)
                 .Build();
         }
@@ -45,11 +50,10 @@ namespace Pvc.CLI
             var scriptPacks = this.services.ScriptPackResolver.GetPacks();
             this.services.Executor.Initialize(assemblies, scriptPacks);
             this.services.Executor.AddReferences(assemblies.ToArray());
-
             this.services.Executor.ImportNamespaces(PvcPlugin.registeredNamespaces.ToArray());
 
             var script =
-                "var pvc = new Pvc();" +
+                "var pvc = new PvcCore.Pvc();" +
                 "{0}" +
                 "pvc.Start(\"{1}\");";
 
