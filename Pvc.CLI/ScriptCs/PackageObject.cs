@@ -6,6 +6,7 @@ using NuGet;
 
 using ScriptCs.Contracts;
 using ScriptCs.Package;
+using System.IO;
 
 namespace ScriptCs.Hosting.Package
 {
@@ -52,7 +53,7 @@ namespace ScriptCs.Hosting.Package
 
         public IEnumerable<string> GetCompatibleDlls(FrameworkName frameworkName)
         {
-            var dlls = _package.GetLibFiles().Where(i => i.EffectivePath.EndsWith(Dll) || i.EffectivePath.EndsWith(Exe));
+            var dlls = _package.GetLibFiles().Where(i => (i.EffectivePath.EndsWith(Dll) || i.EffectivePath.EndsWith(Exe)) && !i.EffectivePath.Contains(Path.DirectorySeparatorChar + "npm" + Path.DirectorySeparatorChar));
             IEnumerable<IPackageFile> compatibleFiles;
             VersionUtility.TryGetCompatibleItems(frameworkName, dlls, out compatibleFiles);
 

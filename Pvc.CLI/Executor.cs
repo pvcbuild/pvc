@@ -6,10 +6,12 @@ using ScriptCs.Contracts;
 using ScriptCs.Hosting.Package;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Edokan.KaiZen.Colors;
 
 namespace Pvc.CLI
 {
@@ -42,12 +44,16 @@ namespace Pvc.CLI
         public void Execute(string commandName)
         {
             var currentDirectory = Directory.GetCurrentDirectory();
+
+            Console.Write(PvcConsole.Tag + " Loading pvc plugins and runtimes ...".DarkGrey());
             var packages = this.services.PackageAssemblyResolver.GetPackages(currentDirectory);
             this.services.InstallationProvider.Initialize();
             this.services.PackageInstaller.InstallPackages(packages);
 
             var assemblies = this.services.AssemblyResolver.GetAssemblyPaths(currentDirectory);
             var scriptPacks = this.services.ScriptPackResolver.GetPacks();
+            Console.Write(" [".Grey() + "done".DarkGrey() + "]".Grey() + Environment.NewLine);
+
             this.services.Executor.Initialize(assemblies, scriptPacks);
             this.services.Executor.AddReferences(assemblies.ToArray());
             this.services.Executor.ImportNamespaces(PvcPlugin.registeredNamespaces.ToArray());

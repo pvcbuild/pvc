@@ -32,13 +32,13 @@ namespace PvcCore
             }
         }
 
-        public static string Tag = "[" + "pvc".Cyan() + "]";
+        public static string Tag = "[".Grey() + "pvc".Cyan() + "]".Grey();
 
         public static string TaskOutputTag
         {
             get
             {
-                return ThreadTask != null ? "[" + ThreadTask.Magenta() + "] " : "";
+                return ThreadTask != null ? "[".Grey() + ThreadTask.Magenta() + "] ".Grey() : "";
             }
         }
 
