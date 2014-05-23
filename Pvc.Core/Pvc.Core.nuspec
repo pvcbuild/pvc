@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package>
+  <metadata>
+    <id>$id$</id>
+    <version>$version$</version>
+    <title>$title$</title>
+    <authors>$author$</authors>
+    <owners>$author$</owners>
+    <licenseUrl>https://github.com/pvcbuild/pvc/blob/master/LICENSE</licenseUrl>
+    <projectUrl>http://github.com/pvcbuild/pvc</projectUrl>
+    <iconUrl>http://i.imgur.com/9F9yb22.png</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>$description$</description>
+    <copyright>Copyright 2014</copyright>
+    <tags>PVC build package task runner scriptcs</tags>
+  </metadata>
+</package>

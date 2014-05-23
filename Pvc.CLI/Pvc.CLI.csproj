@@ -88,6 +88,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\ArgumentHandler.cs" />
+    <Compile Include="Commands\BaseCommand.cs" />
+    <Compile Include="Commands\FlagsParser.cs" />
+    <Compile Include="Commands\InitCommand.cs" />
+    <Compile Include="Commands\InstallCommand.cs" />
+    <Compile Include="Commands\TaskCommand.cs" />
+    <Compile Include="Commands\UpdateCommand.cs" />
+    <Compile Include="Commands\UsageCommand.cs" />
     <Compile Include="Executor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

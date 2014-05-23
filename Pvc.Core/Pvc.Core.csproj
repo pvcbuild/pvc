@@ -46,6 +46,7 @@
     <Compile Include="PvcPlugin.cs" />
     <Compile Include="PvcPipe.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PvcRuntime.cs" />
     <Compile Include="PvcStream.cs" />
     <Compile Include="PvcTask.cs" />
     <Compile Include="PvcUtil.cs" />

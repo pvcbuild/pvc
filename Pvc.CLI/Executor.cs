@@ -23,10 +23,10 @@ namespace Pvc.CLI
         public Executor(string fileName)
         {
             this.fileName = fileName;
-            this.services = this.CreateScriptCsEnv();
+            this.services = CreateScriptCsEnv(this.fileName);
         }
 
-        private ScriptServices CreateScriptCsEnv()
+        internal static ScriptServices CreateScriptCsEnv(string scriptName)
         {
             ILog logger = new Common.Logging.Simple.NoOpLogger();
             //logger = new Common.Logging.Simple.ConsoleOutLogger("[PVC]", Common.Logging.LogLevel.All, true, false, true, "hh:mm");
@@ -37,7 +37,7 @@ namespace Pvc.CLI
                 .PackageAssemblyResolver<PvcPackageAssemblyResolver>()
                 .PackageContainer<PvcPackageContainer>()
                 .InstallationProvider<PvcNugetInstallationProvider>()
-                .ScriptName(this.fileName)
+                .ScriptName(scriptName)
                 .Build();
         }
 
@@ -57,6 +57,9 @@ namespace Pvc.CLI
             this.services.Executor.Initialize(assemblies, scriptPacks);
             this.services.Executor.AddReferences(assemblies.ToArray());
             this.services.Executor.ImportNamespaces(PvcPlugin.registeredNamespaces.ToArray());
+
+            if (assemblies.Count(x => x.EndsWith("Pvc.Core.dll")) == 0)
+                this.services.Executor.AddReferenceAndImportNamespaces(new[] { typeof(PvcCore.Pvc) });
 
             var script =
                 "var pvc = new PvcCore.Pvc();" +

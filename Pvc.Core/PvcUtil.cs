@@ -77,15 +77,21 @@ namespace PvcCore
                     searchBinaries.Add(binary);
             }
 
-            foreach (string test in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(';'))
+            var searchDirectories = (Environment.GetEnvironmentVariable("PATH") ?? "").Split(';');
+
+            // Add chocolatey bin (in case the users PATH is busted)
+            searchDirectories.Concat(new[] { Path.Combine(Environment.GetEnvironmentVariable("ChocolateyInstall"), "bin") });
+
+            foreach (string test in searchDirectories)
             {
                 string path = test.Trim();
 
                 foreach (var searchBinary in searchBinaries)
                 {
                     var binary = Environment.ExpandEnvironmentVariables(searchBinary);
-                    if (!String.IsNullOrEmpty(path) && File.Exists(path = Path.Combine(path, binary)))
-                        return Path.GetFullPath(path);
+                    var binaryRelPath = Path.Combine(path, binary);
+                    if (!String.IsNullOrEmpty(path) && File.Exists(binaryRelPath))
+                        return Path.GetFullPath(binaryRelPath);
                 }
             }
 
