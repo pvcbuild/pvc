@@ -20,7 +20,7 @@ namespace PvcPlugins
             PvcPlugin.registeredNamespaces.AddRange(namespaces);
         }
 
-        public virtual string[] SupportedTags { get; }
+        public virtual string[] SupportedTags { get { return new[] { "*" }; } }
 
         public abstract IEnumerable<PvcStream> Execute(IEnumerable<PvcStream> inputStreams);
     }
