@@ -12,13 +12,18 @@ namespace PvcCore
     {
         public static PvcStream StringToStream(string data, string streamName)
         {
+            return PvcUtil.StringToStream(data, streamName, null);
+        }
+
+        public static PvcStream StringToStream(string data, string streamName, string originalSourcePath)
+        {
             var stream = new MemoryStream();
             var writer = new StreamWriter(stream);
 
             writer.Write(data);
             writer.Flush();
 
-            return new PvcStream(stream).As(streamName);
+            return new PvcStream(() => stream).As(streamName, originalSourcePath);
         }
 
         public static string StreamToTempFile(PvcStream stream)

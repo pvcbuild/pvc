@@ -12,7 +12,6 @@ namespace Pvc.CLI
         static void Main(string[] args)
         {
             PvcConsole.Configure();
-            Directory.SetCurrentDirectory(@"C:\Users\stirno\Documents\GitHub");
 
             var task = new ArgumentHandler().Parse(args);
             task();

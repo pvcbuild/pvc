@@ -53,7 +53,7 @@ namespace PvcCore
         {
             var globs = inputs.Where(x => Regex.IsMatch(x, @"(\*\!)"));
             var streams = inputs.Except(globs).Concat(FilterPaths(globs))
-                .Select(x => new PvcStream(new FileStream(x, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)).As(x));
+                .Select(x => new PvcStream(() => new FileStream(x, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)).As(x, Path.GetFullPath(x)));
 
             return new PvcPipe(streams);
         }

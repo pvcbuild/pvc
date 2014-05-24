@@ -33,8 +33,8 @@ namespace Pvc.CLI.Commands
             {
                 var taskName = flags.ContainsKey("taskname") ? flags["taskname"] : "default";
                 var pvcfile = flags.ContainsKey("pvcfile") ? flags["pvcfile"] : "pvcfile";
+                
                 pvcfile = Path.GetFileNameWithoutExtension(pvcfile) + ".csx";
-
                 if (!File.Exists(pvcfile))
                 {
                     Console.WriteLine("Cannot find " + pvcfile.Cyan() + " in current directory.");
