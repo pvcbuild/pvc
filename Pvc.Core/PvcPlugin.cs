@@ -13,12 +13,14 @@ namespace PvcPlugins
             "PvcCore",
             "PvcPlugins"
         });
-
+        
         public virtual void RegisterNamespaces(params string[] namespaces)
         {
             namespaces = namespaces.Except(new[] { "Pvc" }.Concat(registeredNamespaces)).ToArray();
             PvcPlugin.registeredNamespaces.AddRange(namespaces);
         }
+
+        public abstract string[] SupportedTags { get; set; }
 
         public abstract IEnumerable<PvcStream> Execute(IEnumerable<PvcStream> inputStreams);
     }

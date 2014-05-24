@@ -25,24 +25,40 @@ namespace PvcCore
         /// </summary>
         public string OriginalSourcePath { get; private set; }
 
+        /// <summary>
+        /// Tags represent a way to filter streams for plugins. By default all streams created from
+        /// files will receive a tag of their file extension. Other tags may be applied to streams
+        /// by plugins during the pipe processing.
+        /// </summary>
+        public List<string> Tags { get; set; }
+
         public PvcStream(Func<FileStream> fileStream)
+            : this()
         {
             this.stream = new Lazy<Stream>(fileStream);
         }
 
         public PvcStream(Func<MemoryStream> memoryStream)
+            : this()
         {
             this.stream = new Lazy<Stream>(memoryStream);
         }
 
         public PvcStream(Func<BufferedStream> bufferedStream)
+            : this()
         {
             this.stream = new Lazy<Stream>(bufferedStream);
         }
 
         public PvcStream(Func<NetworkStream> networkStream)
+            : this()
         {
             this.stream = new Lazy<Stream>(networkStream);
+        }
+
+        internal PvcStream()
+        {
+            this.Tags = new List<string>();
         }
 
         public PvcStream As(string streamName)
@@ -54,6 +70,8 @@ namespace PvcCore
         {
             this.StreamName = streamName;
             this.OriginalSourcePath = originalSourcePath;
+            this.Tags.Add(Path.GetExtension(originalSourcePath));
+
             return this;
         }
 

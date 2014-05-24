@@ -66,7 +66,8 @@ namespace PvcCore
                 AllowWindowsPaths = true,
                 MatchBase = true,
                 Dot = true,
-                NoCase = true
+                NoCase = true,
+                NoNull = true
             }));
             
             return miniMatches.SelectMany(m => m.Filter(allPaths));
