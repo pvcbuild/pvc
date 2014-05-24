@@ -82,6 +82,14 @@ namespace PvcCore
             return this;
         }
 
+        public PvcPipe Pipe(Func<IEnumerable<PvcStream>, IEnumerable<PvcStream>> plugin)
+        {
+            this.streams = plugin(this.streams);
+            this.resetStreamPositions();
+
+            return this;
+        }
+
         public PvcPipe Save(string outputPath)
         {
             var dirPath = new DirectoryInfo(outputPath);
@@ -107,11 +115,7 @@ namespace PvcCore
 
         private void resetStreamPositions()
         {
-            // move streams back to beginning
-            foreach (var stream in this.streams)
-            {
-                stream.Position = 0;
-            }
+            this.streams.ToList().ForEach(x => x.ResetStreamPosition());
         }
     }
 }

@@ -58,6 +58,8 @@ namespace Pvc.CLI
             this.services.Executor.AddReferences(assemblies.ToArray());
             this.services.Executor.ImportNamespaces(PvcPlugin.registeredNamespaces.ToArray());
 
+            // In case we haven't yet installed plugins but are running a simple task, inject this
+            // assemblies reference to Pvc.Core
             if (assemblies.Count(x => x.EndsWith("Pvc.Core.dll")) == 0)
                 this.services.Executor.AddReferenceAndImportNamespaces(new[] { typeof(PvcCore.Pvc) });
 

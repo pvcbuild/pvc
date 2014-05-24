@@ -31,7 +31,7 @@ namespace Pvc.CLI
             if (flags.ContainsKey("?"))
                 return () => new UsageCommand(commands).Execute(args, flags);
 
-            if (args.Length >= 1)
+            if (args.Length > 0)
             {
                 var arg = args[0];
 
@@ -43,11 +43,14 @@ namespace Pvc.CLI
                 }
 
                 // must be a task
-                flags.Add("taskName", arg);
+                flags.Add("taskname", arg);
                 return () => new TaskCommand().Execute(args, flags);
             }
-
-            return () => new UsageCommand(commands).Execute(args, flags);
+            else
+            {
+                flags.Add("taskname", "default");
+                return () => new TaskCommand().Execute(args, flags);
+            }
         }
     }
 }

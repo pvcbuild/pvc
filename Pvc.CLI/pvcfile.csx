@@ -1,4 +1,4 @@
-pvc.Task("less", () => {
+/*pvc.Task("less", () => {
 	pvc.Source("less/*.less")
 	   .Pipe(new PvcLess())
 	   .Save("bin");
@@ -18,4 +18,4 @@ pvc.Task("default", () => {
 	pvc.Source(@"C:\Users\stirno\Source\Repos\pvc\Pvc.Core\Pvc.Core.csproj")
 	   .Pipe(new PvcNuGetPack(createSymbolsPackage: true))
 	   .Pipe(new PvcNuGetPush());
-});
+});*/

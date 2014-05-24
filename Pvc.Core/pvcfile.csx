@@ -9,3 +9,14 @@
 	   ))
 	   .Pipe(new PvcNuGetPush());
 });
+
+pvc.Task("inline", () => {
+	pvc.Source("Pvc.Core.csproj")
+	.Pipe((streams) => {
+		streams.ToList().ForEach(s => {
+			Console.WriteLine(s.OriginalSourcePath);
+		});
+
+		return streams;
+	});
+});

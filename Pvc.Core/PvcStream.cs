@@ -129,5 +129,12 @@ namespace PvcCore
 
             return result;
         }
+
+        public void ResetStreamPosition()
+        {
+            // Don't touch the stream position if we haven't actually touched it yet
+            if (this.stream.IsValueCreated)
+                this.stream.Value.Position = 0;
+        }
     }
 }
