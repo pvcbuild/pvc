@@ -14,11 +14,11 @@ allows you to run any tasks you need. Build execution is done via [scriptcs](htt
 cinst pvc
 ```
 
-We'll install our plugins using nuget (pvc install command coming soon):
+We can install/update our plugins and other packages like so:
 
 ```
-nuget install -o pvc-packages Pvc.AzureBlob
-nuget install -o pvc-packages Pvc.Browserify
+pvc install Pvc.AzureBlob
+pvc install Pvc.Browserify
 ```
 
 We use NuGet for packaging but to avoid conflicts with other .NET applications, we have our own packages folder and configuration file at:
@@ -42,9 +42,9 @@ pvc.Task("js", () => {
 });
 
 pvc.Task("stylesheets", () => {
-    pvc.Source("test.less", "test.sass")
-       .Pipe("less$", new PvcLess())
-       .Pipe("(sass|scss)$", new PvcSass())
+    pvc.Source("*.less", "*.sass")
+       .PipeIf("less$", new PvcLess())
+       .PipeIf("(sass|scss)$", new PvcSass())
        .Save("~/deploy");
 }).Requires("sprites");
 
@@ -94,6 +94,11 @@ access such as SassAndCoffee's `SassCompiler`. To work with these libraries ther
 an input stream to a temp file and back.
 
 Its not ideal but it helps us move forward with streaming content into plugins. In the future we hope users will assist us in adding stream support to more 3rd party libraries.
+
+###Plugins and Stream Filtering
+We have a concept of tags in PVC. Streams have a tag collection describing them. By default a tag is added for the file extension (.js, .css, etc) the stream was built from. Additional tags can be added during the pipeline.
+
+Plugins can define a set of `SupportedTags` that they will work with. PVC will make sure that only appropriate streams are given to the plugin and deal with merging the results back into the pipeline on completion. Plugins can modify the tags on existing streams or on the new ones they create (source maps, packages, etc).
 
 ###Current plugins include
 - Browserify [pvc-browserify](https://github.com/pvcbuild/pvc-browserify)
