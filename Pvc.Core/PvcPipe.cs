@@ -63,7 +63,7 @@ namespace PvcCore
 
             var resultStreams = plugin(applicableStreams);
             this.streams = nonApplicableStreams.Concat(resultStreams);
-            this.resetStreamPositions();
+            this.resetStreamPositions(applicableStreams);
             return this;
         }
 
@@ -115,7 +115,7 @@ namespace PvcCore
             }
 
             this.streams = plugin(matchingStreams).Concat(nonMatchingStreams);
-            this.resetStreamPositions();
+            this.resetStreamPositions(matchingStreams);
 
             return this;
         }
@@ -138,8 +138,7 @@ namespace PvcCore
             }
 
             this.streams = truePlugin(matchingStreams).Concat(falsePlugin(nonMatchingStreams));
-
-            this.resetStreamPositions();
+            this.resetStreamPositions(this.streams);
             return this;
         }
 
@@ -161,14 +160,14 @@ namespace PvcCore
                 File.WriteAllText(fileSavePath, streamContents);
             }
 
-            this.resetStreamPositions();
+            this.resetStreamPositions(this.streams);
 
             return this;
         }
 
-        private void resetStreamPositions()
+        private void resetStreamPositions(IEnumerable<PvcStream> resetStreams)
         {
-            this.streams.ToList().ForEach(x => x.ResetStreamPosition());
+            resetStreams.ToList().ForEach(x => x.ResetStreamPosition());
         }
     }
 }
