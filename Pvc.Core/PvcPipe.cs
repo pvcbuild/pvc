@@ -63,7 +63,11 @@ namespace PvcCore
 
             var resultStreams = plugin(applicableStreams);
             this.streams = nonApplicableStreams.Concat(resultStreams);
+            
+            // reset stream pointers
             this.resetStreamPositions(applicableStreams);
+            this.resetStreamPositions(resultStreams);
+
             return this;
         }
 
@@ -114,7 +118,10 @@ namespace PvcCore
                 }
             }
 
-            this.streams = plugin(matchingStreams).Concat(nonMatchingStreams);
+            var resultStreams = plugin(matchingStreams);
+            this.streams = resultStreams.Concat(nonMatchingStreams);
+
+            this.resetStreamPositions(resultStreams);
             this.resetStreamPositions(matchingStreams);
 
             return this;
@@ -136,7 +143,7 @@ namespace PvcCore
                     nonMatchingStreams.Add(stream);
                 }
             }
-
+            
             this.streams = truePlugin(matchingStreams).Concat(falsePlugin(nonMatchingStreams));
             this.resetStreamPositions(this.streams);
             return this;

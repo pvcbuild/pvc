@@ -150,7 +150,7 @@ namespace PvcCore
 
         public void ResetStreamPosition()
         {
-            this.stream.Value.Position = 0;
+            this.Position = 0;
         }
     }
 }

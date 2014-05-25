@@ -50,7 +50,7 @@ namespace Pvc.CLI
             this.services.InstallationProvider.Initialize();
             this.services.PackageInstaller.InstallPackages(packages);
 
-            var assemblies = this.services.AssemblyResolver.GetAssemblyPaths(currentDirectory);
+            var assemblies = this.services.AssemblyResolver.GetAssemblyPaths(currentDirectory).Where(x => !x.EndsWith("Pvc.Core.dll"));
             var scriptPacks = this.services.ScriptPackResolver.GetPacks();
             Console.Write(" [".Grey() + "done".DarkGrey() + "]".Grey() + Environment.NewLine);
 
