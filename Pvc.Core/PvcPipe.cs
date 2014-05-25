@@ -12,10 +12,12 @@ namespace PvcCore
     public class PvcPipe
     {
         private IEnumerable<PvcStream> streams = null;
+        private string baseDirectoryPath;
 
         public PvcPipe(IEnumerable<PvcStream> streams)
         {
             this.streams = streams;
+            this.baseDirectoryPath = Directory.GetCurrentDirectory();
         }
 
         public PvcPipe Pipe(PvcPlugin plugin)
@@ -63,6 +65,9 @@ namespace PvcCore
 
             var resultStreams = plugin(applicableStreams);
             this.streams = nonApplicableStreams.Concat(resultStreams);
+
+            // reset directory (some plugins might screw this up)
+            Directory.SetCurrentDirectory(this.baseDirectoryPath);
             
             // reset stream pointers
             this.resetStreamPositions(applicableStreams);
@@ -121,6 +126,9 @@ namespace PvcCore
             var resultStreams = plugin(matchingStreams);
             this.streams = resultStreams.Concat(nonMatchingStreams);
 
+            // reset directory (some plugins might screw this up)
+            Directory.SetCurrentDirectory(this.baseDirectoryPath);
+
             this.resetStreamPositions(resultStreams);
             this.resetStreamPositions(matchingStreams);
 
@@ -145,6 +153,10 @@ namespace PvcCore
             }
             
             this.streams = truePlugin(matchingStreams).Concat(falsePlugin(nonMatchingStreams));
+
+            // reset directory (some plugins might screw this up)
+            Directory.SetCurrentDirectory(this.baseDirectoryPath);
+
             this.resetStreamPositions(this.streams);
             return this;
         }

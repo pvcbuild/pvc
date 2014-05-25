@@ -64,11 +64,12 @@ namespace Pvc.CLI
                 this.services.Executor.AddReferenceAndImportNamespaces(new[] { typeof(PvcCore.Pvc) });
 
             var script =
-                "var pvc = new PvcCore.Pvc();" +
-                "{0}" +
+                "var pvc = new PvcCore.Pvc();" + Environment.NewLine +
+                "{0}" + Environment.NewLine +
                 "pvc.Start(\"{1}\");";
 
-            var result = this.services.Executor.ExecuteScript(string.Format(script, File.ReadAllText(this.fileName), commandName));
+            var compiledScript = string.Format(script, File.ReadAllText(this.fileName), commandName);
+            var result = this.services.Executor.ExecuteScript(compiledScript);
             if (result.CompileExceptionInfo != null)
                 throw result.CompileExceptionInfo.SourceException;
 
