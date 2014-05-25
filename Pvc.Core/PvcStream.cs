@@ -119,7 +119,7 @@ namespace PvcCore
 
         public override long Seek(long offset, SeekOrigin origin)
         {
-            return this.Seek(offset, origin);
+            return this.stream.Value.Seek(offset, origin);
         }
 
         public override void SetLength(long value)
