@@ -1,4 +1,5 @@
-﻿using PvcPlugins;
+﻿using Minimatch;
+using PvcPlugins;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,9 +15,9 @@ namespace PvcCore
         private IEnumerable<PvcStream> streams = null;
         private string baseDirectoryPath;
 
-        public PvcPipe(IEnumerable<PvcStream> streams)
+        public PvcPipe()
         {
-            this.streams = streams;
+            this.streams = new List<PvcStream>();
             this.baseDirectoryPath = Directory.GetCurrentDirectory();
         }
 
@@ -182,6 +183,31 @@ namespace PvcCore
             this.resetStreamPositions(this.streams);
 
             return this;
+        }
+
+        public PvcPipe Source(params string[] inputs)
+        {
+            var globs = inputs.Where(x => Regex.IsMatch(x, @"(\*|\!)"));
+            var streams = inputs.Except(globs).Concat(FilterPaths(globs))
+                .Select(x => new PvcStream(() => new FileStream(x, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)).As(x, Path.GetFullPath(x)));
+
+            this.streams = this.streams.Concat(streams);
+            return this;
+        }
+
+        internal IEnumerable<string> FilterPaths(IEnumerable<string> globs)
+        {
+            var allPaths = Directory.EnumerateFiles(Directory.GetCurrentDirectory(), "*", SearchOption.AllDirectories).Select(x => PvcUtil.PathRelativeToCurrentDirectory(x));
+            var miniMatches = globs.Select(g => new Minimatcher(g, new Options
+            {
+                AllowWindowsPaths = true,
+                MatchBase = true,
+                Dot = true,
+                NoCase = true,
+                NoNull = true
+            }));
+
+            return miniMatches.SelectMany(m => m.Filter(allPaths));
         }
 
         private void resetStreamPositions(IEnumerable<PvcStream> resetStreams)

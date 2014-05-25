@@ -51,26 +51,7 @@ namespace PvcCore
 
         public PvcPipe Source(params string[] inputs)
         {
-            var globs = inputs.Where(x => Regex.IsMatch(x, @"(\*|\!)"));
-            var streams = inputs.Except(globs).Concat(FilterPaths(globs))
-                .Select(x => new PvcStream(() => new FileStream(x, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)).As(x, Path.GetFullPath(x)));
-
-            return new PvcPipe(streams);
-        }
-
-        internal IEnumerable<string> FilterPaths(IEnumerable<string> globs)
-        {
-            var allPaths = Directory.EnumerateFiles(Directory.GetCurrentDirectory(), "*", SearchOption.AllDirectories).Select(x => PvcUtil.PathRelativeToCurrentDirectory(x));
-            var miniMatches = globs.Select(g => new Minimatcher(g, new Options
-            {
-                AllowWindowsPaths = true,
-                MatchBase = true,
-                Dot = true,
-                NoCase = true,
-                NoNull = true
-            }));
-            
-            return miniMatches.SelectMany(m => m.Filter(allPaths));
+            return new PvcPipe().Source(inputs);
         }
 
         public void Start(string taskName)
