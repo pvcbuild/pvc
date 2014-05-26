@@ -30,6 +30,9 @@ namespace Pvc.CLI.Commands
 
         internal override void Execute(string[] args, Dictionary<string, string> flags)
         {
+            if (!Directory.Exists(ScriptCs.Pvc.Constants.PackagesFolder))
+                Directory.CreateDirectory(ScriptCs.Pvc.Constants.PackagesFolder);
+
             if (args.Length > 1)
             {
                 var packageName = args[1];
