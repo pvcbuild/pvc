@@ -41,6 +41,12 @@ namespace Pvc.CLI.Commands
                     return;
                 }
 
+                if (File.Exists(ScriptCs.Pvc.Constants.PackagesFile) && !Directory.Exists(ScriptCs.Pvc.Constants.PackagesFolder))
+                {
+                    Console.WriteLine("Packages folder missing. Restoring from " + ScriptCs.Pvc.Constants.PackagesFile + " ...");
+                    new InstallCommand().Execute(new string[] { }, new Dictionary<string, string>());
+                }
+
                 Console.WriteLine("Preparing to execute task '{0}' and dependencies from {1}", taskName.Magenta(), pvcfile.Cyan());
 
                 var executor = new Executor(Path.Combine(Directory.GetCurrentDirectory(), pvcfile));

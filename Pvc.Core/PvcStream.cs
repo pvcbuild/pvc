@@ -56,6 +56,12 @@ namespace PvcCore
             this.stream = new Lazy<Stream>(networkStream);
         }
 
+        public PvcStream(Func<PvcStream> pvcStream)
+            : this()
+        {
+            this.stream = new Lazy<Stream>(pvcStream);
+        }
+
         internal PvcStream()
         {
             this.Tags = new List<string>();

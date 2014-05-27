@@ -1,4 +1,6 @@
-﻿using PvcCore;
+﻿using Newtonsoft.Json.Linq;
+using NuGet;
+using PvcCore;
 using ScriptCs.Hosting.Package;
 using System;
 using System.Collections.Generic;
@@ -33,61 +35,39 @@ namespace Pvc.CLI.Commands
             if (!Directory.Exists(ScriptCs.Pvc.Constants.PackagesFolder))
                 Directory.CreateDirectory(ScriptCs.Pvc.Constants.PackagesFolder);
 
+            var services = Executor.CreateScriptCsEnv("");
+            services.InstallationProvider.Initialize();
+
             if (args.Length > 1)
             {
                 var packageName = args[1];
+                var packageRef = new PvcPackageReference(packageName);
 
-                var nugetArgs = new List<string>(new[] {
-                    "install",
-                    packageName,
-                    "-o",
-                    ScriptCs.Pvc.Constants.PackagesFolder
-                });
-
-                var version = flags.ContainsKey("version") ? flags["version"] : null;
-                if (version != null)
-                    nugetArgs.AddRange(new[] {
-                        "-version",
-                        version
-                    });
-
-                var resultStreams = PvcUtil.StreamProcessExecution(PvcUtil.FindBinaryInPath("NuGet.exe", "NuGet.bat"), Directory.GetCurrentDirectory(), nugetArgs.ToArray());
-                
-                var outLine = string.Empty;
-                var outStreamReader = new StreamReader(resultStreams.Item1);
-                while ((outLine = outStreamReader.ReadLine()) != null)
-                {
-                    Console.WriteLine(outLine);
-                }
-
-                var errOutputReader = new StreamReader(resultStreams.Item2);
-                while ((outLine = errOutputReader.ReadLine()) != null)
-                {
-                    Console.WriteLine(outLine);
-                }
-
-                // cleanup duplicate packages - we currently can't handle two versions of an unsigned assembly
-                var moduleDirectories = Directory.EnumerateDirectories(Path.Combine(ScriptCs.Pvc.Constants.PackagesFolder))
-                    .Where(x => Regex.IsMatch(x, @"\d+\.\d+$"))
-                    .OrderByDescending(x => new DirectoryInfo(x).LastWriteTime);
-                
-                var keeperDirs = new List<string>();
-                foreach (var dir in moduleDirectories)
-                {
-                    var dirIdentifier = Regex.Match(dir, @"(.*)(\.\d+){3,4}$").Groups[1].Value;
-                    if (Regex.IsMatch(dirIdentifier, @"\.\d+$")) {
-                        dirIdentifier = dirIdentifier.Substring(0, dirIdentifier.LastIndexOf('.'));
-                    }
-
-                    if (keeperDirs.Contains(dirIdentifier))
-                    {
-                        Directory.Delete(dir, true);
-                        continue;
-                    }
-
-                    keeperDirs.Add(dirIdentifier);
-                }
+                services.PackageInstaller.InstallPackages(new[] { packageRef }, true);
+                this.GenerateConfigFile();
             }
+            else
+            {
+                var packages = services.PackageAssemblyResolver.GetPackages(Directory.GetCurrentDirectory());
+                services.PackageInstaller.InstallPackages(packages);
+            }
+        }
+
+        internal void GenerateConfigFile()
+        {
+            var repository = new LocalPackageRepository(Path.Combine(Directory.GetCurrentDirectory(), ScriptCs.Pvc.Constants.PackagesFolder));
+            var packages = repository.GetPackages();
+
+            var configFile = new JObject();
+            var dependencyObject = new JObject();
+            configFile.Add("dependencies", dependencyObject);
+
+            foreach (var package in packages)
+            {
+                dependencyObject.Add(new JProperty(package.Id, package.Version.ToString()));
+            }
+
+            File.WriteAllText(Path.Combine(Directory.GetCurrentDirectory(), ScriptCs.Pvc.Constants.PackagesFile), configFile.ToString());
         }
     }
 }

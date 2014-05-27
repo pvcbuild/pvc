@@ -76,13 +76,13 @@ namespace ScriptCs.Hosting.Package
             try
             {
                 _manager.InstallPackage(packageId.PackageId, version, allowPrereleaseVersions: allowPreRelease, ignoreDependencies: false);
-                _logger.Info("Installed: " + packageName);
+                Console.WriteLine("Installed: " + packageName);
                 return true;
             }
             catch (Exception e)
             {
-                _logger.Error("Installation failed: " + packageName);
-                _logger.Error(e.Message);
+                Console.Error.WriteLine("Installation failed: " + packageName);
+                Console.Error.WriteLine(e.Message);
                 return false;
             }
         }

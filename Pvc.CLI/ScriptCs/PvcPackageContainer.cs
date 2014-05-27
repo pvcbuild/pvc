@@ -9,6 +9,8 @@ using ScriptCs.Contracts;
 
 using IFileSystem = ScriptCs.Contracts.IFileSystem;
 using PackageReference = ScriptCs.Package.PackageReference;
+using Newtonsoft.Json.Linq;
+using System;
 
 namespace ScriptCs.Hosting.Package
 {
@@ -51,7 +53,7 @@ namespace ScriptCs.Hosting.Package
 
                 if (!packageReferenceFile.EntryExists(package.Id, package.Version))
                 {
-                    packageReferenceFile.AddEntry(package.Id, package.Version, newestFramework);
+                    packageReferenceFile.AddEntry(package.Id, package.Version, false, newestFramework);
 
                     if (newestFramework == null)
                     {
@@ -86,25 +88,30 @@ namespace ScriptCs.Hosting.Package
 
         public IEnumerable<IPackageReference> FindReferences(string path)
         {
-            var packageReferenceFile = new PackageReferenceFile(path);
-
-            var references = packageReferenceFile.GetPackageReferences().ToList();
-            if (references.Any())
+            // if config file exists, we use those packages only
+            if (_fileSystem.FileExists(path))
             {
-                foreach (var packageReference in references)
+                var configObject = JObject.Parse(File.ReadAllText(path));
+                var packages = configObject["dependencies"];
+
+                foreach (var package in packages)
                 {
+                    var packageProp = (JProperty)package;
+                    var packageVersion = new SemanticVersion(packageProp.Value.ToString());
+
                     yield return new PackageReference(
-                            packageReference.Id,
-                            packageReference.TargetFramework,
-                            packageReference.Version.Version,
-                            packageReference.Version.SpecialVersion);
+                        packageProp.Name,
+                        VersionUtility.ParseFrameworkName("net45"),
+                        packageVersion.Version,
+                        packageVersion.SpecialVersion
+                    );
                 }
 
                 yield break;
             }
 
             // No packages.config, check packages folder
-            var packagesFolder = Path.Combine(_fileSystem.GetWorkingDirectory(path));
+            var packagesFolder = Path.Combine(_fileSystem.GetWorkingDirectory(path), Pvc.Constants.PackagesFolder);
             if (!_fileSystem.DirectoryExists(packagesFolder))
             {
                 yield break;

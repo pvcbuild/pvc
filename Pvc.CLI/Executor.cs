@@ -46,9 +46,6 @@ namespace Pvc.CLI
             var currentDirectory = Directory.GetCurrentDirectory();
 
             Console.Write(PvcConsole.Tag + " Loading pvc plugins and runtimes ...".DarkGrey());
-            var packages = this.services.PackageAssemblyResolver.GetPackages(currentDirectory);
-            this.services.InstallationProvider.Initialize();
-            this.services.PackageInstaller.InstallPackages(packages);
 
             var assemblies = this.services.AssemblyResolver.GetAssemblyPaths(currentDirectory).Where(x => !x.EndsWith("Pvc.Core.dll"));
             var scriptPacks = this.services.ScriptPackResolver.GetPacks();
@@ -64,11 +61,34 @@ namespace Pvc.CLI
                 this.services.Executor.AddReferenceAndImportNamespaces(new[] { typeof(PvcCore.Pvc) });
 
             var script =
-                "var pvc = new PvcCore.Pvc();" + Environment.NewLine +
                 "{0}" + Environment.NewLine +
-                "pvc.Start(\"{1}\");";
+                "{1}" + Environment.NewLine +
+                "var pvc = new PvcCore.Pvc();" + Environment.NewLine +
+                "{2}" + Environment.NewLine +
+                "pvc.Start(\"{3}\");";
 
-            var compiledScript = string.Format(script, File.ReadAllText(this.fileName), commandName);
+            var pvcScriptLines = File.ReadAllLines(this.fileName);
+
+            var loadScriptLines = new StringBuilder();
+            var requireScriptLines = new StringBuilder();
+            var baseScriptLines = new StringBuilder();
+            foreach (var line in pvcScriptLines)
+            {
+                if (line.StartsWith("#load"))
+                {
+                    loadScriptLines.AppendLine(line);
+                }
+                else if (line.StartsWith("#r"))
+                {
+                    requireScriptLines.AppendLine(line);
+                }
+                else
+                {
+                    baseScriptLines.AppendLine(line);
+                }
+            }
+
+            var compiledScript = string.Format(script, loadScriptLines, requireScriptLines, baseScriptLines, commandName);
             var result = this.services.Executor.ExecuteScript(compiledScript);
             if (result.CompileExceptionInfo != null)
                 throw result.CompileExceptionInfo.SourceException;
