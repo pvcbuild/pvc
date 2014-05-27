@@ -25,7 +25,7 @@ We use NuGet for packaging but to avoid conflicts with other .NET applications, 
 
 ```
 ./pvc-packages/
-./pvc-packages/pvc-packages.config
+./pvc-project.json
 ```
 
 We're going to create a 'false fork' of any active plugins so that our GitHub organization page can be used to locate plugins for now: [PVC Build](http://github.com/pvcbuild)
