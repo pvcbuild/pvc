@@ -26,6 +26,11 @@ namespace PvcCore
             return new PvcStream(() => stream).As(streamName, originalSourcePath);
         }
 
+        public static PvcStream PathToStream(string path, string streamName = null)
+        {
+            return new PvcStream(() => new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)).As(streamName ?? PvcUtil.PathRelativeToCurrentDirectory(path), path);
+        }
+
         public static string StreamToTempFile(PvcStream stream)
         {
             // be sure to start from beginning

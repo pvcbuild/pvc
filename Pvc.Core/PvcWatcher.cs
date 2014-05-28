@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,10 +11,89 @@ namespace PvcCore
     public class PvcWatcher
     {
         public static List<PvcWatcherItem> Items = new List<PvcWatcherItem>();
+        public static ConcurrentQueue<FileSystemEventArgs> EventQueue = new ConcurrentQueue<FileSystemEventArgs>();
 
         public static void RegisterWatchPipe(List<string> globs, List<Func<PvcPipe, PvcPipe>> pipeline, List<string> additionalFiles)
         {
             Items.Add(new PvcWatcherItem(globs, pipeline, additionalFiles));
+        }
+
+        public static void ListenForChanges(string currentDirectory)
+        {
+            var watcher = new FileSystemWatcher(currentDirectory)
+            {
+                NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.Size | NotifyFilters.LastWrite,
+                EnableRaisingEvents = true,
+                IncludeSubdirectories = true,
+                InternalBufferSize = 16777216
+            };
+
+            watcher.BeginInit();
+            watcher.Changed += watcher_Changed;
+            watcher.Created += watcher_Changed;
+            watcher.Deleted += watcher_Changed;
+            watcher.Renamed += watcher_Changed;
+            watcher.EndInit();
+
+            while (true)
+            {
+                // begin event loop for watcher
+                Task.Run(() => ProcessQueueItem());
+            }
+        }
+
+        static void ProcessQueueItem()
+        {
+            FileSystemEventArgs eventQueueItem = null;
+            if (EventQueue.TryDequeue(out eventQueueItem))
+            {
+                foreach (var item in Items)
+                {
+                    var pipe = new PvcPipe();
+                    var relativePath = PvcUtil.PathRelativeToCurrentDirectory(eventQueueItem.FullPath);
+
+                    // if eventQueueItem.FullPath matches any items or their additional files, re-run that pipeline
+                    var matchingFiles = pipe.FilterPaths(item.Globs);
+                    var additionalFiles = pipe.FilterPaths(item.AdditionalFiles);
+
+                    if (matchingFiles.Contains(relativePath) || additionalFiles.Contains(relativePath))
+                    {
+                        var newStreams = new List<PvcStream>();
+
+                        // if its an 'additional file' match we need to run on the whole matching set to find the 'real'
+                        // file that should be processed. Same if it was a deletion event.
+                        if (additionalFiles.Contains(relativePath) || eventQueueItem.ChangeType == WatcherChangeTypes.Deleted)
+                        {
+                            newStreams.AddRange(matchingFiles.Select(x => PvcUtil.PathToStream(x)));
+                        }
+                        // otherwise we run against only the changed item
+                        else
+                        {
+                            newStreams.Add(PvcUtil.PathToStream(eventQueueItem.FullPath));
+                        }
+
+                        pipe.streams = newStreams;
+                        foreach (var pipeline in item.Pipeline)
+                        {
+                            pipe = pipeline(pipe);
+                        }
+                    }
+                }
+            }
+        }
+
+        static ConcurrentDictionary<string, DateTime> EventThrottles = new ConcurrentDictionary<string, DateTime>();
+
+        static void watcher_Changed(object sender, FileSystemEventArgs e)
+        {
+            var hasKey = EventThrottles.ContainsKey(e.FullPath);
+            if (hasKey && EventThrottles[e.FullPath] > DateTime.Now.AddMilliseconds(-30))
+            {
+                return;
+            }
+
+            EventThrottles.AddOrUpdate(e.FullPath, DateTime.Now, (k, v) => DateTime.Now);
+            PvcWatcher.EventQueue.Enqueue(e);
         }
     }
 

@@ -53,23 +53,12 @@ namespace Pvc.CLI.Commands
                 var executor = new Executor(Path.Combine(currentDirectory, pvcfile));
                 executor.Execute(taskName);
 
-                if (PvcWatcher.Items.Count == 0)
+                if (PvcWatcher.Items.Count > 0)
                 {
                     Console.WriteLine("");
                     Console.WriteLine("Watcher enabled ...");
 
-                    var watcher = new FileSystemWatcher(currentDirectory)
-                    {
-                        NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.Size | NotifyFilters.LastWrite,
-                        EnableRaisingEvents = true,
-                        IncludeSubdirectories = true,
-                        InternalBufferSize = 16777216
-                    };
-
-                    watcher.BeginInit();
-                    watcher.Changed += watcher_Changed;
-                    watcher.Created += watcher_Changed;
-                    watcher.Deleted += watcher_Changed;
+                    PvcWatcher.ListenForChanges(currentDirectory);
                 }
             }
             catch (Exception ex)
@@ -99,10 +88,6 @@ namespace Pvc.CLI.Commands
 
                 Console.WriteLine("Task {0}failed with an exception", threadTask != null ? "'" + threadTask.Magenta() + "' " : "");
             }
-        }
-
-        void watcher_Changed(object sender, FileSystemEventArgs e)
-        {
         }
     }
 }

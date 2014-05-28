@@ -12,7 +12,7 @@ namespace PvcCore
 {
     public class PvcPipe
     {
-        private IEnumerable<PvcStream> streams;
+        internal IEnumerable<PvcStream> streams;
         private List<string> globs;
         private List<Func<PvcPipe, PvcPipe>> pipeline;
         private string baseDirectoryPath;
