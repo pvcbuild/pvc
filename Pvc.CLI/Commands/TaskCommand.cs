@@ -49,8 +49,17 @@ namespace Pvc.CLI.Commands
 
                 Console.WriteLine("Preparing to execute task '{0}' and dependencies from {1}", taskName.Magenta(), pvcfile.Cyan());
 
-                var executor = new Executor(Path.Combine(Directory.GetCurrentDirectory(), pvcfile));
+                var currentDirectory = Directory.GetCurrentDirectory();
+                var executor = new Executor(Path.Combine(currentDirectory, pvcfile));
                 executor.Execute(taskName);
+
+                if (PvcWatcher.Items.Count > 0)
+                {
+                    Console.WriteLine("");
+                    Console.WriteLine("Watcher enabled ...");
+
+                    PvcWatcher.ListenForChanges(currentDirectory);
+                }
             }
             catch (Exception ex)
             {
