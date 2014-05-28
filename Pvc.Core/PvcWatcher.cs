@@ -39,7 +39,8 @@ namespace PvcCore
             while (true)
             {
                 // begin event loop for watcher
-                Task.Run(() => ProcessQueueItem());
+                ProcessQueueItem();
+                System.Threading.Thread.Sleep(1000);
             }
         }
 
