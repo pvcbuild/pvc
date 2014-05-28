@@ -175,6 +175,7 @@ namespace PvcCore
         public PvcPipe Save(string outputPath)
         {
             this.pipeline.Add((pipe) => pipe.Save(outputPath));
+            PvcWatcher.IgnoredPaths.Add(Path.GetFullPath(outputPath));
 
             var dirPath = new DirectoryInfo(outputPath);
             if (!Directory.Exists(outputPath))
@@ -202,7 +203,8 @@ namespace PvcCore
             this.globs.AddRange(inputs);
             var globs = inputs.Where(x => Regex.IsMatch(x, @"(\*|\!)"));
             var streams = inputs.Except(globs).Concat(FilterPaths(globs))
-                .Select(x => new PvcStream(() => new FileStream(x, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)).As(x, Path.GetFullPath(x)));
+                .Select(x => new { RelativePath = PvcUtil.PathRelativeToCurrentDirectory(x), FullPath = Path.GetFullPath(x) })
+                .Select(x => new PvcStream(() => new FileStream(x.FullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)).As(x.RelativePath, x.FullPath));
 
             this.streams = this.streams.Concat(streams);
             return this;

@@ -12,6 +12,7 @@ namespace PvcCore
     {
         public static List<PvcWatcherItem> Items = new List<PvcWatcherItem>();
         public static ConcurrentQueue<FileSystemEventArgs> EventQueue = new ConcurrentQueue<FileSystemEventArgs>();
+        public static List<string> IgnoredPaths = new List<string>();
 
         public static void RegisterWatchPipe(List<string> globs, List<Func<PvcPipe, PvcPipe>> pipeline, List<string> additionalFiles)
         {
@@ -73,9 +74,19 @@ namespace PvcCore
                         }
 
                         pipe.streams = newStreams;
+
+                        newStreams.ForEach(x => Console.WriteLine("Updating " + x.StreamName));
+
                         foreach (var pipeline in item.Pipeline)
                         {
-                            pipe = pipeline(pipe);
+                            try
+                            {
+                                pipe = pipeline(pipe);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine(ex.Message);
+                            }
                         }
                     }
                 }
@@ -86,6 +97,14 @@ namespace PvcCore
 
         static void watcher_Changed(object sender, FileSystemEventArgs e)
         {
+            foreach (var ignoredPath in IgnoredPaths)
+            {
+                if (e.FullPath.StartsWith(ignoredPath))
+                {
+                    return;
+                }
+            }
+
             var hasKey = EventThrottles.ContainsKey(e.FullPath);
             if (hasKey && EventThrottles[e.FullPath] > DateTime.Now.AddMilliseconds(-30))
             {
