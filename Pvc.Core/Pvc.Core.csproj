@@ -50,6 +50,7 @@
     <Compile Include="PvcStream.cs" />
     <Compile Include="PvcTask.cs" />
     <Compile Include="PvcUtil.cs" />
+    <Compile Include="PvcWatcher.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="pvcfile.csx" />

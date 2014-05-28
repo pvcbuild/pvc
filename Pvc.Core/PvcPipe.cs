@@ -12,12 +12,16 @@ namespace PvcCore
 {
     public class PvcPipe
     {
-        private IEnumerable<PvcStream> streams = null;
+        private IEnumerable<PvcStream> streams;
+        private List<string> globs;
+        private List<Func<PvcPipe, PvcPipe>> pipeline;
         private string baseDirectoryPath;
 
         public PvcPipe()
         {
             this.streams = new List<PvcStream>();
+            this.globs = new List<string>();
+            this.pipeline = new List<Func<PvcPipe, PvcPipe>>();
             this.baseDirectoryPath = Directory.GetCurrentDirectory();
         }
 
@@ -44,6 +48,8 @@ namespace PvcCore
 
         public PvcPipe Pipe(string[] tags, Func<IEnumerable<PvcStream>, IEnumerable<PvcStream>> plugin)
         {
+            this.pipeline.Add((pipe) => pipe.Pipe(tags, plugin));
+
             var applicableStreams = new List<PvcStream>();
             var nonApplicableStreams = new List<PvcStream>();
 
@@ -109,6 +115,8 @@ namespace PvcCore
 
         public PvcPipe PipeIf(Regex ifRegex, Func<IEnumerable<PvcStream>, IEnumerable<PvcStream>> plugin)
         {
+            this.pipeline.Add((pipe) => pipe.PipeIf(ifRegex, plugin));
+
             var matchingStreams = new List<PvcStream>();
             var nonMatchingStreams = new List<PvcStream>();
 
@@ -138,6 +146,8 @@ namespace PvcCore
 
         public PvcPipe PipeIf(Regex ifRegex, Func<IEnumerable<PvcStream>, IEnumerable<PvcStream>> truePlugin, Func<IEnumerable<PvcStream>, IEnumerable<PvcStream>> falsePlugin)
         {
+            this.pipeline.Add((pipe) => pipe.PipeIf(ifRegex, truePlugin, falsePlugin));
+
             var matchingStreams = new List<PvcStream>();
             var nonMatchingStreams = new List<PvcStream>();
 
@@ -164,6 +174,8 @@ namespace PvcCore
 
         public PvcPipe Save(string outputPath)
         {
+            this.pipeline.Add((pipe) => pipe.Save(outputPath));
+
             var dirPath = new DirectoryInfo(outputPath);
             if (!Directory.Exists(outputPath))
             {
@@ -187,12 +199,26 @@ namespace PvcCore
 
         public PvcPipe Source(params string[] inputs)
         {
+            this.globs.AddRange(inputs);
             var globs = inputs.Where(x => Regex.IsMatch(x, @"(\*|\!)"));
             var streams = inputs.Except(globs).Concat(FilterPaths(globs))
                 .Select(x => new PvcStream(() => new FileStream(x, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)).As(x, Path.GetFullPath(x)));
 
             this.streams = this.streams.Concat(streams);
             return this;
+        }
+
+        public PvcPipe Watch(params string[] additionalFiles)
+        {
+            var pipe = new PvcPipe()
+            {
+                streams = this.streams,
+                globs = this.globs
+            };
+
+            PvcWatcher.RegisterWatchPipe(this.globs, this.pipeline, additionalFiles.ToList());
+
+            return pipe;
         }
 
         internal IEnumerable<string> FilterPaths(IEnumerable<string> globs)
