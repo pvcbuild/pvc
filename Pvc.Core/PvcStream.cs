@@ -10,7 +10,18 @@ namespace PvcCore
 {
     public class PvcStream : Stream
     {
-        private readonly Lazy<Stream> stream;
+        private readonly Func<Stream> streamFactory;
+        private Stream _stream = null;
+        private Stream stream
+        {
+            get
+            {
+                if (this._stream == null)
+                    this._stream = streamFactory();
+
+                return this._stream;
+            }
+        }
 
         /// <summary>
         /// Arbitrary name for a stream. For streams created by pvc.Source, this will be the name
@@ -35,31 +46,31 @@ namespace PvcCore
         public PvcStream(Func<FileStream> fileStream)
             : this()
         {
-            this.stream = new Lazy<Stream>(fileStream);
+            this.streamFactory = fileStream;
         }
 
         public PvcStream(Func<MemoryStream> memoryStream)
             : this()
         {
-            this.stream = new Lazy<Stream>(memoryStream);
+            this.streamFactory = memoryStream;
         }
 
         public PvcStream(Func<BufferedStream> bufferedStream)
             : this()
         {
-            this.stream = new Lazy<Stream>(bufferedStream);
+            this.streamFactory = bufferedStream;
         }
 
         public PvcStream(Func<NetworkStream> networkStream)
             : this()
         {
-            this.stream = new Lazy<Stream>(networkStream);
+            this.streamFactory = networkStream;
         }
 
         public PvcStream(Func<PvcStream> pvcStream)
             : this()
         {
-            this.stream = new Lazy<Stream>(pvcStream);
+            this.streamFactory = pvcStream;
         }
 
         internal PvcStream()
@@ -83,59 +94,59 @@ namespace PvcCore
 
         public override bool CanRead
         {
-            get { return this.stream.Value.CanRead; }
+            get { return this.stream.CanRead; }
         }
 
         public override bool CanSeek
         {
-            get { return this.stream.Value.CanSeek; }
+            get { return this.stream.CanSeek; }
         }
 
         public override bool CanWrite
         {
-            get { return this.stream.Value.CanWrite; }
+            get { return this.stream.CanWrite; }
         }
 
         public override void Flush()
         {
-            this.stream.Value.Flush();
+            this.stream.Flush();
         }
 
         public override long Length
         {
-            get { return this.stream.Value.Length; }
+            get { return this.stream.Length; }
         }
 
         public override long Position
         {
             get
             {
-                return this.stream.Value.Position;
+                return this.stream.Position;
             }
             set
             {
-                this.stream.Value.Position = value;
+                this.stream.Position = value;
             }
         }
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            return this.stream.Value.Read(buffer, offset, count);
+            return this.stream.Read(buffer, offset, count);
         }
 
         public override long Seek(long offset, SeekOrigin origin)
         {
-            return this.stream.Value.Seek(offset, origin);
+            return this.stream.Seek(offset, origin);
         }
 
         public override void SetLength(long value)
         {
-            this.stream.Value.SetLength(value);
+            this.stream.SetLength(value);
         }
 
         public override void Write(byte[] buffer, int offset, int count)
         {
-            this.stream.Value.Write(buffer, offset, count);
+            this.stream.Write(buffer, offset, count);
         }
 
         /// <summary>
@@ -145,13 +156,23 @@ namespace PvcCore
         /// <returns></returns>
         public override string ToString()
         {
-            var streamPosition = this.stream.Value.Position;
-            this.stream.Value.Position = 0;
+            var streamPosition = this.stream.Position;
+            this.stream.Position = 0;
 
-            var result = new StreamReader(this.stream.Value).ReadToEnd();
-            this.stream.Value.Position = streamPosition;
+            var result = new StreamReader(this.stream).ReadToEnd();
+            this.stream.Position = streamPosition;
 
             return result;
+        }
+
+        /// <summary>
+        /// Unloads stream so that attached files can be renamed or deleted. If accessed again, it will be
+        /// recreated using the same arguments.
+        /// </summary>
+        public void UnloadStream()
+        {
+            this._stream.Close();
+            this._stream = null;
         }
 
         public void ResetStreamPosition()

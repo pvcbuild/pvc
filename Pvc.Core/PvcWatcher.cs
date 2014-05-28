@@ -89,6 +89,8 @@ namespace PvcCore
                                 Console.WriteLine(ex.Message);
                             }
                         }
+
+                        newStreams.ForEach(x => x.UnloadStream());
                     }
                 }
             }
