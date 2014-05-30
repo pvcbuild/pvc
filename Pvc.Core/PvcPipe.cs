@@ -200,6 +200,8 @@ namespace PvcCore
 
         public PvcPipe Source(params string[] inputs)
         {
+            inputs = inputs.Select(x => x.TrimStart('~')).ToArray();
+
             this.globs.AddRange(inputs);
             var globs = inputs.Where(x => Regex.IsMatch(x, @"(\*|\!)"));
             var streams = inputs.Except(globs).Concat(FilterPaths(globs))
