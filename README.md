@@ -45,7 +45,8 @@ pvc.Task("stylesheets", () => {
     pvc.Source("*.less", "*.sass")
        .PipeIf("less$", new PvcLess())
        .PipeIf("(sass|scss)$", new PvcSass())
-       .Save("~/deploy");
+       .Save("~/deploy")
+       .Watch();
 }).Requires("sprites");
 
 pvc.Task("sprites", () => {
