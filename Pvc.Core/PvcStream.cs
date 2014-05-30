@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
@@ -72,12 +71,6 @@ namespace PvcCore
             : this()
         {
             this.streamFactory = pvcStream;
-        }
-
-        public PvcStream(Func<GZipStream> gzipStream)
-            : this()
-        {
-            this.streamFactory = gzipStream;
         }
 
         internal PvcStream()
