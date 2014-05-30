@@ -58,7 +58,7 @@ namespace Pvc.CLI
             var testAssemblyDir = Path.Combine(currentDirectory, ScriptCs.Pvc.Constants.PackagesFolder, "bin");
             if (Directory.Exists(testAssemblyDir))
             {
-                assemblies.AddRange(Directory.EnumerateFiles(testAssemblyDir, "*.dll", SearchOption.AllDirectories));
+                assemblies.AddRange(Directory.EnumerateFiles(testAssemblyDir, "*.dll", SearchOption.AllDirectories).Where(x => !x.EndsWith("Pvc.Core.dll")));
             }
 
             this.services.Executor.AddReferences(assemblies.ToArray());
