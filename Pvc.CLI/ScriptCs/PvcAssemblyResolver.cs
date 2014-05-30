@@ -43,33 +43,9 @@ namespace ScriptCs
             }
 
             var packageAssemblies = GetPackageAssemblies(path);
-            //var binAssemblies = GetBinAssemblies(path);
-
-            //assemblies = packageAssemblies.Union(binAssemblies).ToList();
             _assemblyPathCache.Add(path, packageAssemblies.ToList());
 
             return packageAssemblies;
-        }
-
-        private IEnumerable<string> GetBinAssemblies(string path)
-        {
-            var binFolder = Path.Combine(path, Constants.BinFolder);
-            if (!_fileSystem.DirectoryExists(binFolder))
-            {
-                return Enumerable.Empty<string>();
-            }
-
-            var assemblies = _fileSystem.EnumerateFiles(binFolder, "*.dll")
-                .Union(_fileSystem.EnumerateFiles(binFolder, "*.exe"))
-                .Where(f => _assemblyUtility.IsManagedAssembly(f))
-                .ToList();
-
-            foreach (var assembly in assemblies)
-            {
-                _logger.DebugFormat("Found assembly in bin folder: {0}", Path.GetFileName(assembly));
-            }
-
-            return assemblies;
         }
 
         private IEnumerable<string> GetPackageAssemblies(string path)

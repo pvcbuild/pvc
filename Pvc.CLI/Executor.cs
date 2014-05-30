@@ -48,11 +48,19 @@ namespace Pvc.CLI
 
             Console.Write(PvcConsole.Tag + " Loading pvc plugins and runtimes ...".DarkGrey());
 
-            var assemblies = this.services.AssemblyResolver.GetAssemblyPaths(currentDirectory).Where(x => !x.EndsWith("Pvc.Core.dll"));
+            var assemblies = this.services.AssemblyResolver.GetAssemblyPaths(currentDirectory).Where(x => !x.EndsWith("Pvc.Core.dll")).ToList();
             var scriptPacks = this.services.ScriptPackResolver.GetPacks();
             Console.Write(" [".Grey() + "done".DarkGrey() + "]".Grey() + Environment.NewLine);
 
             this.services.Executor.Initialize(assemblies, scriptPacks);
+
+            // Find test assemblies
+            var testAssemblyDir = Path.Combine(currentDirectory, ScriptCs.Pvc.Constants.PackagesFolder, "bin");
+            if (Directory.Exists(testAssemblyDir))
+            {
+                assemblies.AddRange(Directory.EnumerateFiles(testAssemblyDir, "*.dll", SearchOption.AllDirectories));
+            }
+
             this.services.Executor.AddReferences(assemblies.ToArray());
             this.services.Executor.ImportNamespaces(PvcPlugin.registeredNamespaces.ToArray());
 
