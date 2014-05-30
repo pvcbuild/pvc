@@ -11,5 +11,6 @@ namespace ScriptCs.Pvc
     {
         public static string PackagesFile = "pvc-project.json";
         public static string PackagesFolder = "pvc-packages";
+        public static string TestAssembliesFolder = "test";
     }
 }

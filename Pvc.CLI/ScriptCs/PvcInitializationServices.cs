@@ -26,7 +26,7 @@ namespace ScriptCs
             RegisterOverrideOrDefault<IFileSystem>(builder, b => b.RegisterType<FileSystem>().As<IFileSystem>().SingleInstance());
             RegisterOverrideOrDefault<IAssemblyUtility>(builder, b => b.RegisterType<AssemblyUtility>().As<IAssemblyUtility>().SingleInstance());
             RegisterOverrideOrDefault<IPackageContainer>(builder, b => b.RegisterType<PvcPackageContainer>().As<IPackageContainer>().SingleInstance());
-            RegisterOverrideOrDefault<IPackageAssemblyResolver>(builder, b => b.RegisterType<PvcPackageAssemblyResolver>().As<IPackageAssemblyResolver>().SingleInstance());
+            RegisterOverrideOrDefault<IPackageAssemblyResolver>(builder, b => b.RegisterType<PvcInitPackageAssemblyResolver>().As<IPackageAssemblyResolver>().SingleInstance());
             RegisterOverrideOrDefault<IAssemblyResolver>(builder, b => b.RegisterType<PvcAssemblyResolver>().As<IAssemblyResolver>().SingleInstance());
             RegisterOverrideOrDefault<IModuleLoader>(builder, b => b.RegisterType<ModuleLoader>().As<IModuleLoader>().SingleInstance());
             return builder.Build();

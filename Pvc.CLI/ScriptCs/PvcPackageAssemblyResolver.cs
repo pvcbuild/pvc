@@ -8,8 +8,18 @@ using ScriptCs.Package;
 
 namespace ScriptCs
 {
+    public class PvcInitPackageAssemblyResolver : PvcPackageAssemblyResolver
+    {
+        public PvcInitPackageAssemblyResolver(IFileSystem fileSystem, IPackageContainer packageContainer, ILog logger)
+            : base(fileSystem, packageContainer, logger)
+        {
+            _throwMissing = false;
+        }
+    }
+
     public class PvcPackageAssemblyResolver : IPackageAssemblyResolver
     {
+        protected bool _throwMissing = true;
         private readonly IFileSystem _fileSystem;
         private readonly IPackageContainer _packageContainer;
         private readonly ILog _logger;
@@ -61,7 +71,7 @@ namespace ScriptCs
 
             LoadFiles(packageDir, packages, missingAssemblies, foundAssemblyPaths, _fileSystem.FileExists(packageFile));
 
-            if (missingAssemblies.Count > 0)
+            if (missingAssemblies.Count > 0 && _throwMissing)
             {
                 var missingAssembliesString = string.Join(",", missingAssemblies.Select(i => i.PackageId + " " + i.FrameworkName.FullName));
                 throw new MissingAssemblyException(string.Format("Missing: {0}", missingAssembliesString));
