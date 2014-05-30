@@ -56,7 +56,7 @@ namespace Pvc.CLI.Commands
         internal void GenerateConfigFile()
         {
             var repository = new LocalPackageRepository(Path.Combine(Directory.GetCurrentDirectory(), ScriptCs.Pvc.Constants.PackagesFolder));
-            var packages = repository.GetPackages();
+            var packages = repository.GetPackages().OrderByDescending(x => x.Version);
 
             var configFile = new JObject();
             var dependencyObject = new JObject();
@@ -64,7 +64,8 @@ namespace Pvc.CLI.Commands
 
             foreach (var package in packages)
             {
-                dependencyObject.Add(new JProperty(package.Id, package.Version.ToString()));
+                if (dependencyObject[package.Id] == null)
+                    dependencyObject.Add(new JProperty(package.Id, package.Version.ToString()));
             }
 
             File.WriteAllText(Path.Combine(Directory.GetCurrentDirectory(), ScriptCs.Pvc.Constants.PackagesFile), configFile.ToString());

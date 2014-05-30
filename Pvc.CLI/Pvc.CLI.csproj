@@ -97,6 +97,7 @@
     <Compile Include="Commands\FlagsParser.cs" />
     <Compile Include="Commands\InitCommand.cs" />
     <Compile Include="Commands\InstallCommand.cs" />
+    <Compile Include="ScriptCs\PvcInitializationServices.cs" />
     <Compile Include="Commands\TaskCommand.cs" />
     <Compile Include="Commands\UpdateCommand.cs" />
     <Compile Include="Commands\UsageCommand.cs" />
@@ -121,6 +122,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="ScriptCs\PvcPackageReference.cs" />
+    <Compile Include="ScriptCs\PvcScriptServicesBuilder.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

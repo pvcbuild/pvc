@@ -31,7 +31,8 @@ namespace Pvc.CLI
             ILog logger = new Common.Logging.Simple.NoOpLogger();
             //logger = new Common.Logging.Simple.ConsoleOutLogger("[PVC]", Common.Logging.LogLevel.All, true, false, true, "hh:mm");
             var console = new ScriptCs.ScriptConsole();
-            return new ScriptCs.ScriptServicesBuilder(console, logger)
+
+            return new ScriptCs.PvcScriptServicesBuilder(console, logger)
                 .ScriptEngine<ScriptCs.Engine.Roslyn.RoslynScriptInMemoryEngine>()
                 .AssemblyResolver<PvcAssemblyResolver>()
                 .PackageAssemblyResolver<PvcPackageAssemblyResolver>()
