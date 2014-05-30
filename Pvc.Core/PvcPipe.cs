@@ -185,12 +185,15 @@ namespace PvcCore
 
             foreach (var stream in this.streams)
             {
-                var streamContents = new StreamReader(stream).ReadToEnd();
                 var fileSavePath = Path.Combine(outputPath, stream.StreamName);
 
                 // verify directory exists for write
                 new FileInfo(fileSavePath).Directory.Create();
-                File.WriteAllText(fileSavePath, streamContents);
+
+                using (var fileStream = File.Create(fileSavePath))
+                {
+                    stream.CopyTo(fileStream);
+                }
             }
 
             this.resetStreamPositions(this.streams);
