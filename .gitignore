@@ -174,5 +174,6 @@ UpgradeLog*.htm
 FakesAssemblies/
 
 *.nupkg
-packages
-pvc-packages
+packages/
+pvc-packages/
+README.html
