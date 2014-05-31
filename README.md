@@ -1,6 +1,6 @@
 ![PVC Build Engine](http://i.imgur.com/vyROdJJ.png)
 
-###What
+###What 
 
 The PVC Build Engine started as a port of [gulp](http://gulpjs.com) for .NET projects but we are now evolving on our own
 towards the goal of being the easiest to manage, most comprehensive task runner available.
