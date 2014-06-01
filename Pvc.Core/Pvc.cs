@@ -74,7 +74,7 @@ namespace PvcCore
                 foreach (var runTask in runTasks)
                 {
                     // create locks
-                    locks.AddOrUpdate(runTask.taskName, new { }, (s, o) => null);
+                    locks.AddOrUpdate(runTask.taskName, new { }, (s, o) => o);
                 }
             }
 
