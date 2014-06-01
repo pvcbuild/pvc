@@ -16,6 +16,14 @@ namespace PvcCore
         private List<string> globs;
         private List<Func<PvcPipe, PvcPipe>> pipeline;
         private string baseDirectoryPath;
+        private Options minimatchOptions = new Options
+        {
+            AllowWindowsPaths = true,
+            MatchBase = true,
+            Dot = true,
+            NoCase = true,
+            NoNull = true
+        };
 
         public PvcPipe()
         {
@@ -172,10 +180,24 @@ namespace PvcCore
             return this;
         }
 
+        public PvcPipe Ignore(params string[] globs)
+        {
+            this.pipeline.Add((pipe) => pipe.Ignore(globs));
+            this.streams = this.streams.Where(x => !globs.Any(y => new Minimatcher(y, minimatchOptions).IsMatch(x.StreamName)));
+
+            return this;
+        }
+
+        public PvcPipe Ignore(params string[][] globs)
+        {
+            var flattenedGlobs = globs.SelectMany(x => x);
+            return this.Ignore(flattenedGlobs.ToArray());
+        }
+
         public PvcPipe Save(string outputPath)
         {
             this.pipeline.Add((pipe) => pipe.Save(outputPath));
-            PvcWatcher.IgnoredPaths.Add(Path.GetFullPath(outputPath));
+            PvcWatcher.IgnoredGlobs.Add(Path.GetFullPath(outputPath));
 
             var dirPath = new DirectoryInfo(outputPath);
             if (!Directory.Exists(outputPath))
@@ -204,8 +226,8 @@ namespace PvcCore
         public PvcPipe Source(params string[] inputs)
         {
             inputs = inputs.Select(x => x.TrimStart('~')).ToArray();
-
             this.globs.AddRange(inputs);
+
             var globs = inputs.Where(x => Regex.IsMatch(x, @"(\*|\!)"));
             var streams = inputs.Except(globs).Concat(FilterPaths(globs))
                 .Select(x => new { RelativePath = PvcUtil.PathRelativeToCurrentDirectory(x), FullPath = Path.GetFullPath(x) })
@@ -231,14 +253,7 @@ namespace PvcCore
         internal IEnumerable<string> FilterPaths(IEnumerable<string> globs)
         {
             var allPaths = Directory.EnumerateFiles(Directory.GetCurrentDirectory(), "*", SearchOption.AllDirectories).Select(x => PvcUtil.PathRelativeToCurrentDirectory(x));
-            var miniMatches = globs.Select(g => new Minimatcher(g, new Options
-            {
-                AllowWindowsPaths = true,
-                MatchBase = true,
-                Dot = true,
-                NoCase = true,
-                NoNull = true
-            }));
+            var miniMatches = globs.Select(g => new Minimatcher(g, minimatchOptions));
 
             return miniMatches.SelectMany(m => m.Filter(allPaths));
         }

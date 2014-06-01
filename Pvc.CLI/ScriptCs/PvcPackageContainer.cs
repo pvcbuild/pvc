@@ -97,14 +97,7 @@ namespace ScriptCs.Hosting.Package
                 foreach (var package in packages)
                 {
                     var packageProp = (JProperty)package;
-                    var packageVersion = new SemanticVersion(packageProp.Value.ToString());
-
-                    yield return new PackageReference(
-                        packageProp.Name,
-                        VersionUtility.ParseFrameworkName("net45"),
-                        packageVersion.Version,
-                        packageVersion.SpecialVersion
-                    );
+                    yield return new PvcPackageReference(packageProp.Name, packageProp.Value.ToString());
                 }
 
                 yield break;
@@ -130,7 +123,7 @@ namespace ScriptCs.Hosting.Package
                 var newestFramework = GetNewestSupportedFramework(arbitraryPackage)
                     ?? VersionUtility.EmptyFramework;
 
-                yield return new PackageReference(
+                yield return new PvcPackageReference(
                         arbitraryPackage.Id,
                         newestFramework,
                         arbitraryPackage.Version.Version,

@@ -56,7 +56,7 @@ namespace Pvc.CLI.Commands
                 if (PvcWatcher.Items.Count > 0)
                 {
                     Console.WriteLine("");
-                    Console.WriteLine("Watcher enabled ...");
+                    Console.WriteLine("Monitoring {0} for changes", "pipeline".Magenta());
 
                     PvcWatcher.ListenForChanges(currentDirectory);
                 }

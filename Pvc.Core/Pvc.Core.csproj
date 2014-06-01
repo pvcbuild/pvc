@@ -35,6 +35,7 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ArtifactGlobs.cs" />
     <Compile Include="Lib\Colors\ColorsExtension.cs" />
     <Compile Include="Lib\Colors\EscapeSequencer.cs" />
     <Compile Include="Lib\TimeSpanHumanizeExtensions.cs" />

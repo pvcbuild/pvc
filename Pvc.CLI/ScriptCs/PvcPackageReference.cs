@@ -3,10 +3,11 @@ using ScriptCs.Contracts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Pvc.CLI
+namespace ScriptCs.Hosting.Package
 {
     class PvcPackageReference : IPackageReference
     {
@@ -24,6 +25,14 @@ namespace Pvc.CLI
 
             this.FrameworkName = VersionUtility.ParseFrameworkName("net45");
             this.PackageId = packageId;
+        }
+
+        public PvcPackageReference(string packageId, FrameworkName frameworkName, Version version, string specialVersion)
+        {
+            this.PackageId = packageId;
+            this.FrameworkName = frameworkName;
+            this.Version = version;
+            this.SpecialVersion = specialVersion;
         }
 
         public System.Runtime.Versioning.FrameworkName FrameworkName

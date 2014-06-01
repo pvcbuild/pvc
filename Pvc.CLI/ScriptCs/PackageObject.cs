@@ -54,6 +54,10 @@ namespace ScriptCs.Hosting.Package
         public IEnumerable<string> GetCompatibleDlls(FrameworkName frameworkName)
         {
             var dlls = _package.GetLibFiles().Where(i => (i.EffectivePath.EndsWith(Dll) || i.EffectivePath.EndsWith(Exe)) && !i.EffectivePath.Contains(Path.DirectorySeparatorChar + "npm" + Path.DirectorySeparatorChar));
+
+            // search for DLLs in tools dir; malformed packages are annoying.
+            dlls = dlls.Concat(_package.GetToolFiles().Where(i => (i.EffectivePath.EndsWith(Dll) || i.EffectivePath.EndsWith(Exe)) && !i.EffectivePath.Contains(Path.DirectorySeparatorChar + "npm" + Path.DirectorySeparatorChar)));
+
             IEnumerable<IPackageFile> compatibleFiles;
             VersionUtility.TryGetCompatibleItems(frameworkName, dlls, out compatibleFiles);
 

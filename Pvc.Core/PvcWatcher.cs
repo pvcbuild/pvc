@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Humanizer;
+using Edokan.KaiZen.Colors;
+using Minimatch;
 
 namespace PvcCore
 {
@@ -12,7 +16,7 @@ namespace PvcCore
     {
         public static List<PvcWatcherItem> Items = new List<PvcWatcherItem>();
         public static ConcurrentQueue<FileSystemEventArgs> EventQueue = new ConcurrentQueue<FileSystemEventArgs>();
-        public static List<string> IgnoredPaths = new List<string>();
+        public static List<string> IgnoredGlobs = new List<string>();
 
         public static void RegisterWatchPipe(List<string> globs, List<Func<PvcPipe, PvcPipe>> pipeline, List<string> additionalFiles)
         {
@@ -39,8 +43,8 @@ namespace PvcCore
             while (true)
             {
                 // begin event loop for watcher
+                System.Threading.Thread.Sleep(100);
                 ProcessQueueItem();
-                System.Threading.Thread.Sleep(1000);
             }
         }
 
@@ -76,7 +80,9 @@ namespace PvcCore
 
                         pipe.streams = newStreams;
 
-                        newStreams.ForEach(x => Console.WriteLine("Updating " + x.StreamName));
+                        newStreams.ForEach(x => Console.WriteLine("Processing pipeline for '{0}'", x.StreamName.Magenta()));
+                        var stopwatch = new Stopwatch();
+                        stopwatch.Start();
 
                         foreach (var pipeline in item.Pipeline)
                         {
@@ -90,6 +96,9 @@ namespace PvcCore
                             }
                         }
 
+                        stopwatch.Stop();
+                        Console.WriteLine("Finished pipeline processing in {0}", stopwatch.Elapsed.Humanize().White());
+
                         newStreams.ForEach(x => x.UnloadStream());
                     }
                 }
@@ -100,9 +109,18 @@ namespace PvcCore
 
         static void watcher_Changed(object sender, FileSystemEventArgs e)
         {
-            foreach (var ignoredPath in IgnoredPaths)
+            var matchOptions = new Options
             {
-                if (e.FullPath.StartsWith(ignoredPath))
+                AllowWindowsPaths = true,
+                MatchBase = true,
+                Dot = true,
+                NoCase = true,
+                NoNull = true
+            };
+
+            foreach (var ignoredGlob in IgnoredGlobs)
+            {
+                if (new Minimatcher(ignoredGlob, matchOptions).IsMatch(e.FullPath) || e.FullPath.StartsWith(ignoredGlob))
                 {
                     return;
                 }
