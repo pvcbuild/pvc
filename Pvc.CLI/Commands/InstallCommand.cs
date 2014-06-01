@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Common.Logging;
+using Newtonsoft.Json.Linq;
 using NuGet;
 using PvcCore;
 using ScriptCs.Hosting.Package;
@@ -32,43 +33,33 @@ namespace Pvc.CLI.Commands
 
         internal override void Execute(string[] args, Dictionary<string, string> flags)
         {
-            if (!Directory.Exists(ScriptCs.Pvc.Constants.PackagesFolder))
-                Directory.CreateDirectory(ScriptCs.Pvc.Constants.PackagesFolder);
+            if (!Directory.Exists(ScriptCs.Constants.PackagesFolder))
+                Directory.CreateDirectory(ScriptCs.Constants.PackagesFolder);
 
-            var services = Executor.CreateScriptCsEnv("");
-            services.InstallationProvider.Initialize();
+            var logger = new Common.Logging.Simple.NoOpLogger();
+            var console = new ScriptCs.Hosting.ScriptConsole();
+            var services = new ScriptCs.Hosting.ScriptServicesBuilder(console, logger);
+            var installationProvider = services.InitializationServices.GetInstallationProvider();
+            installationProvider.Initialize();
+
+            var packageInstaller = services.InitializationServices.GetPackageInstaller();
+            var packageAssemblyResolver = services.InitializationServices.GetPackageAssemblyResolver();
 
             if (args.Length > 1)
             {
                 var packageName = args[1];
-                var packageRef = new PvcPackageReference(packageName);
+                var packageVersion = "";
+                if (flags.ContainsKey("version"))
+                    packageVersion = flags["version"];
 
-                services.PackageInstaller.InstallPackages(new[] { packageRef }, true);
-                this.GenerateConfigFile();
+                var packageRef = new ScriptCs.PackageReference(packageName, VersionUtility.ParseFrameworkName("net45"), packageVersion);
+                packageInstaller.InstallPackages(new[] { packageRef }, true);
             }
             else
             {
-                var packages = services.PackageAssemblyResolver.GetPackages(Directory.GetCurrentDirectory());
-                services.PackageInstaller.InstallPackages(packages);
+                var packages = packageAssemblyResolver.GetPackages(Directory.GetCurrentDirectory());
+                packageInstaller.InstallPackages(packages);
             }
-        }
-
-        internal void GenerateConfigFile()
-        {
-            var repository = new LocalPackageRepository(Path.Combine(Directory.GetCurrentDirectory(), ScriptCs.Pvc.Constants.PackagesFolder));
-            var packages = repository.GetPackages().OrderByDescending(x => x.Version);
-
-            var configFile = new JObject();
-            var dependencyObject = new JObject();
-            configFile.Add("dependencies", dependencyObject);
-
-            foreach (var package in packages)
-            {
-                if (dependencyObject[package.Id] == null)
-                    dependencyObject.Add(new JProperty(package.Id, package.Version.ToString()));
-            }
-
-            File.WriteAllText(Path.Combine(Directory.GetCurrentDirectory(), ScriptCs.Pvc.Constants.PackagesFile), configFile.ToString());
         }
     }
 }
