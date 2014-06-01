@@ -86,11 +86,13 @@ namespace Pvc.CLI.Commands
             var currentDirectory = Directory.GetCurrentDirectory();
             var logger = new Common.Logging.Simple.NoOpLogger();
             var console = new ScriptCs.Hosting.ScriptConsole();
-            var services = new ScriptCs.Hosting.ScriptServicesBuilder(console, logger)
-                .ScriptEngine<ScriptCs.Engine.Roslyn.RoslynScriptInMemoryEngine>()
-                .ScriptName(pvcfile)
-                .Build();
+            var servicesBuilder = new ScriptCs.Hosting.ScriptServicesBuilder(console, logger);
+            if (Type.GetType ("Mono.Runtime") != null)
+                servicesBuilder.ScriptEngine<ScriptCs.Engine.Mono.MonoScriptEngine>();
+            else
+                servicesBuilder.ScriptEngine<ScriptCs.Engine.Roslyn.RoslynScriptInMemoryEngine>();
 
+            var services = servicesBuilder.ScriptName(pvcfile).Build();
             Console.Write("{0} Loading pvc plugins and runtimes ...".DarkGrey(), PvcConsole.Tag);
 
             var assemblies = services.AssemblyResolver.GetAssemblyPaths(currentDirectory).Where(x => !x.EndsWith("Pvc.Core.dll")).ToList();
@@ -107,12 +109,13 @@ namespace Pvc.CLI.Commands
             }
 
             services.Executor.AddReferences(assemblies.ToArray());
-            services.Executor.ImportNamespaces(PvcPlugin.registeredNamespaces.ToArray());
 
             // In case we haven't yet installed plugins but are running a simple task, inject this
             // assemblies reference to Pvc.Core
             if (assemblies.Count(x => x.EndsWith("Pvc.Core.dll")) == 0)
-                services.Executor.AddReferences(new[] { typeof(PvcCore.Pvc).Assembly });
+                services.Executor.AddReferences(new[] { typeof(PvcCore.Pvc).Assembly.Location });
+
+            services.Executor.ImportNamespaces(PvcPlugin.registeredNamespaces.ToArray());
 
             var script =
                 "{0}" + Environment.NewLine +
