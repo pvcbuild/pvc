@@ -90,10 +90,20 @@ namespace Pvc.CLI.Commands
                 }
             ));
 
+            string fullPath;
+            try
+            {
+                fullPath = Path.GetFullPath(initContext.Config[folderNameKey]);
+            }
+            catch (ArgumentException)
+            {
+                fullPath = Path.GetFullPath(Directory.GetCurrentDirectory());
+            }
+
             Console.WriteLine("Fetch template repository ...");
             Console.WriteLine("  ({0})", initContext.TemplateRepo.Cyan());
             Console.WriteLine("into directory ...");
-            Console.WriteLine("  ({0})", Path.GetFullPath(initContext.Config[folderNameKey]));
+            Console.WriteLine("  ({0})", fullPath);
             Console.Write(Environment.NewLine);
 
             string gitRepo;
@@ -157,13 +167,20 @@ namespace Pvc.CLI.Commands
                     {
                         if (chooseDir.Count() > 1)
                         {
-                            var matchFiles = chooseDir.Where(x => x.EndsWith(ctx.Config[prompt.Value.Field]));
-                            chooseDir.Except(matchFiles).ToList().ForEach(x => File.Delete(x));
+                            if (string.IsNullOrEmpty(ctx.Config[prompt.Value.Field]))
+                            {
+                                chooseDir.ToList().ForEach(x => File.Delete(x));
+                            }
+                            else
+                            {
+                                var matchFiles = chooseDir.Where(x => x.EndsWith(ctx.Config[prompt.Value.Field]));
+                                chooseDir.Except(matchFiles).ToList().ForEach(x => File.Delete(x));
 
-                            var matchFile = matchFiles.First();
-                            var newFileDest = Path.Combine(Path.GetDirectoryName(matchFile), prompt.Value.Choose);
-                            File.Move(matchFile, newFileDest);
-                            removedFiles.Add(matchFile);
+                                var matchFile = matchFiles.First();
+                                var newFileDest = Path.Combine(Path.GetDirectoryName(matchFile), prompt.Value.Choose);
+                                File.Move(matchFile, newFileDest);
+                                removedFiles.Add(matchFile);
+                            }
                         }
                     }
 
@@ -189,6 +206,8 @@ namespace Pvc.CLI.Commands
                     Console.WriteLine(" [{0}] {1}", values.Count, option[0]);
                 }
                 ctx.Config[prompt.Value.Field] = values[this.ReadOption(values.Count) - 1];
+                if (ctx.Config[prompt.Value.Field] == null)
+                    ctx.Config[prompt.Value.Field] = "";
             }
             else
             {
