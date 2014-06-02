@@ -9,11 +9,37 @@ using PvcCore;
 using System.Text.RegularExpressions;
 using Common.Logging;
 using PvcPlugins;
+using ScriptCs.Contracts;
+using ScriptCs;
+using ScriptCs.Hosting;
 
 namespace Pvc.CLI.Commands
 {
     public class TaskCommand : CommandBase
     {
+        public TaskCommand()
+        {
+            var logger = new Common.Logging.Simple.NoOpLogger();
+            var console = new ScriptCs.Hosting.ScriptConsole();
+            var servicesBuilder = new PvcScriptServicesBuilder(console, logger)
+                .ScriptName("TaskCommand")
+                .ScriptHostFactory<PvcScriptHostFactory>();
+
+            if (Type.GetType("Mono.Runtime") != null) this.IsMono = true;
+            if (this.IsMono)
+                servicesBuilder.ScriptEngine<ScriptCs.Engine.Mono.MonoScriptEngine>();
+            else
+                servicesBuilder.ScriptEngine<ScriptCs.Engine.Roslyn.RoslynScriptInMemoryEngine>();
+
+            servicesBuilder.InitializationServices.GetFileSystem();
+
+            this.ServicesBuilder = servicesBuilder;
+        }
+
+        internal IScriptServicesBuilder ServicesBuilder { get; private set; }
+
+        internal bool IsMono { get; private set; }
+
         internal override bool IsTopLevel
         {
             get { return false; }
@@ -43,9 +69,10 @@ namespace Pvc.CLI.Commands
                     return;
                 }
 
-                if (File.Exists(ScriptCs.Constants.PackagesFile) && !Directory.Exists(ScriptCs.Constants.PackagesFolder))
+                var _fileSystem = this.ServicesBuilder.InitializationServices.GetFileSystem();
+                if (File.Exists(_fileSystem.PackagesFile) && !Directory.Exists(_fileSystem.PackagesFolder))
                 {
-                    Console.WriteLine("Packages folder missing. Restoring from {0} ...", ScriptCs.Constants.PackagesFile);
+                    Console.WriteLine("Packages folder missing. Restoring from {0} ...", _fileSystem.PackagesFile);
                     new InstallCommand().Execute(new string[] { }, new Dictionary<string, string>());
                 }
 
@@ -84,16 +111,8 @@ namespace Pvc.CLI.Commands
         private void ExecuteScript(string pvcfile, string taskName)
         {
             var currentDirectory = Directory.GetCurrentDirectory();
-            var logger = new Common.Logging.Simple.NoOpLogger();
-            var console = new ScriptCs.Hosting.ScriptConsole();
-            var servicesBuilder = new ScriptCs.Hosting.ScriptServicesBuilder(console, logger);
-            if (Type.GetType ("Mono.Runtime") != null)
-                servicesBuilder.ScriptEngine<ScriptCs.Engine.Mono.MonoScriptEngine>();
-            else
-                servicesBuilder.ScriptEngine<ScriptCs.Engine.Roslyn.RoslynScriptInMemoryEngine>();
-
-            var services = servicesBuilder.ScriptName(pvcfile).Build();
             Console.Write("{0} Loading pvc plugins and runtimes ...".DarkGrey(), PvcConsole.Tag);
+            var services = this.ServicesBuilder.Build();
 
             var assemblies = services.AssemblyResolver.GetAssemblyPaths(currentDirectory).Where(x => !x.EndsWith("Pvc.Core.dll")).ToList();
             var scriptPacks = services.ScriptPackResolver.GetPacks();
@@ -102,7 +121,7 @@ namespace Pvc.CLI.Commands
             services.Executor.Initialize(assemblies, scriptPacks);
 
             // Find test assemblies
-            var testAssemblyDir = Path.Combine(currentDirectory, ScriptCs.Constants.PackagesFolder, "bin");
+            var testAssemblyDir = Path.Combine(currentDirectory, services.FileSystem.PackagesFolder, "bin");
             if (Directory.Exists(testAssemblyDir))
             {
                 assemblies.AddRange(Directory.EnumerateFiles(testAssemblyDir, "*.dll", SearchOption.AllDirectories).Where(x => !x.EndsWith("Pvc.Core.dll")));
@@ -116,37 +135,11 @@ namespace Pvc.CLI.Commands
                 services.Executor.AddReferences(new[] { typeof(PvcCore.Pvc).Assembly.Location });
 
             services.Executor.ImportNamespaces(PvcPlugin.registeredNamespaces.ToArray());
+            var pvcScript = File.ReadAllText(pvcfile);
 
-            var script =
-                "{0}" + Environment.NewLine +
-                "{1}" + Environment.NewLine +
-                "var pvc = new PvcCore.Pvc();" + Environment.NewLine +
-                "{2}" + Environment.NewLine +
-                "pvc.Start(\"{3}\");";
+            PvcScriptHost.PVCInstance = new PvcCore.Pvc();
+            var result = services.Executor.ExecuteScript(pvcScript);
 
-            var pvcScriptLines = File.ReadAllLines(pvcfile);
-
-            var loadScriptLines = new StringBuilder();
-            var requireScriptLines = new StringBuilder();
-            var baseScriptLines = new StringBuilder();
-            foreach (var line in pvcScriptLines)
-            {
-                if (line.StartsWith("#load"))
-                {
-                    loadScriptLines.AppendLine(line);
-                }
-                else if (line.StartsWith("#r"))
-                {
-                    requireScriptLines.AppendLine(line);
-                }
-                else
-                {
-                    baseScriptLines.AppendLine(line);
-                }
-            }
-
-            var compiledScript = string.Format(script, loadScriptLines, requireScriptLines, baseScriptLines, taskName);
-            var result = services.Executor.ExecuteScript(compiledScript);
             if (result.CompileExceptionInfo != null)
                 throw result.CompileExceptionInfo.SourceException;
 
@@ -158,6 +151,8 @@ namespace Pvc.CLI.Commands
                     throw result.ExecuteExceptionInfo.SourceException;
             }
 
+            PvcScriptHost.RunTask(taskName);
+            
             if (PvcWatcher.Items.Count > 0)
             {
                 Console.WriteLine("");

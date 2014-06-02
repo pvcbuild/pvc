@@ -58,6 +58,10 @@
     <Compile Include="Commands\UsageCommand.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ScriptCs\PvcFileSystem.cs" />
+    <Compile Include="ScriptCs\PvcPackageContainer.cs" />
+    <Compile Include="ScriptCs\PvcScriptHost.cs" />
+    <Compile Include="ScriptCs\PvcScriptServicesBuilder.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

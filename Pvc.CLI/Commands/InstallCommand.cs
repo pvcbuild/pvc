@@ -33,12 +33,12 @@ namespace Pvc.CLI.Commands
 
         internal override void Execute(string[] args, Dictionary<string, string> flags)
         {
-            if (!Directory.Exists(ScriptCs.Constants.PackagesFolder))
-                Directory.CreateDirectory(ScriptCs.Constants.PackagesFolder);
-
-            var logger = new Common.Logging.Simple.ConsoleOutLogger("install", LogLevel.Info, false, false, false, "");
+            var logger = new Common.Logging.Simple.ConsoleOutLogger("install", LogLevel.Debug, false, false, false, "");
             var console = new ScriptCs.Hosting.ScriptConsole();
             var services = new ScriptCs.Hosting.ScriptServicesBuilder(console, logger);
+
+            var initServices = new ScriptCs.Hosting.InitializationServices(logger);
+
             var installationProvider = services.InitializationServices.GetInstallationProvider();
             installationProvider.Initialize();
 
