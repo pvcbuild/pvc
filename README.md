@@ -1,5 +1,8 @@
 ![PVC Build Engine](http://i.imgur.com/vyROdJJ.png)
 
+
+[![Build status](https://ci.appveyor.com/api/projects/status/23w1o9k0jhjagrns)](https://ci.appveyor.com/project/stirno/pvc)
+
 ###What 
 
 The PVC Build Engine started as a port of [gulp](http://gulpjs.com) for .NET projects but we are now evolving on our own
