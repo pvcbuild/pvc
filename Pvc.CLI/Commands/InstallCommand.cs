@@ -35,7 +35,7 @@ namespace Pvc.CLI.Commands
         {
             var logger = new Common.Logging.Simple.ConsoleOutLogger("install", LogLevel.Debug, false, false, false, "");
             var console = new ScriptCs.Hosting.ScriptConsole();
-            var services = new ScriptCs.Hosting.ScriptServicesBuilder(console, logger);
+            var services = new PvcScriptServicesBuilder(console, logger);
 
             var initServices = new ScriptCs.Hosting.InitializationServices(logger);
 
@@ -60,6 +60,8 @@ namespace Pvc.CLI.Commands
                 var packages = packageAssemblyResolver.GetPackages(Directory.GetCurrentDirectory());
                 packageInstaller.InstallPackages(packages);
             }
+
+            packageAssemblyResolver.SavePackages();
         }
     }
 }
