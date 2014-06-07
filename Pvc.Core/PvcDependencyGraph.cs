@@ -8,11 +8,12 @@ namespace PvcCore
 {
     public class PvcDependencyGraph
     {
-        private Dictionary<string, PvcDependencyNode> map;
+        private Dictionary<string, Node> map;
+        private string getPathSource;
 
         public PvcDependencyGraph()
         {
-            map = new Dictionary<string, PvcDependencyNode>();
+            map = new Dictionary<string, Node>();
         }
 
         public void AddDependencies(string from, IEnumerable<string> dependencies = null)
@@ -24,195 +25,238 @@ namespace PvcCore
 
             foreach (string to in dependencies)
             {
-                f.Neighbors.Add(to, GetOrAddNode(to));
+                var toNode = GetOrAddNode(to);
+                f.Neighbors.Add(to, toNode);
+                toNode.NeighborsOf.Add(from, f);
             }
         }
 
         public void AddDependency(string from, string to)
         {
             GetOrAddNode(from).Neighbors.Add(to, GetOrAddNode(to));
+            GetOrAddNode(to).NeighborsOf.Add(from, GetOrAddNode(from));
         }
 
-        private PvcDependencyNode GetOrAddNode(string name)
+        public List<string> GetDependencies(string node)
+        {
+            return GetOrAddNode(node)
+                .Neighbors
+                .Values
+                .Select(n => n.Name)
+                .ToList<string>();
+        }
+
+        private Node GetOrAddNode(string name)
         {
             if (map.ContainsKey(name))
                 return map[name];
-            var node = new PvcDependencyNode(name);
+            var node = new Node(name);
             map.Add(name, node);
             return node;
         }
 
         public List<List<string>> GetPaths(string name)
         {
+            this.getPathSource = name;
             var startNode = GetOrAddNode(name);
-            var paths = new List<List<string>>();
-            var path = new List<string>();
-            var inPath = new HashSet<string>();
-            paths.Add(path);
-
-            BuildPaths(startNode, path, inPath, paths, new List<PvcDependencyNode>());
-            RemoveShortPaths(paths);
-            ExpandAndReversePaths(paths);
-
+            var filteredMap = FilterMap(startNode);
+            var paths = ExpandTiers(BuildTiers(filteredMap));
             return paths;
         }
 
-        private void ExpandAndReversePaths(List<List<string>> paths)
+        private void FindCircularPath(List<Node> path, Node node)
         {
-            for (int i = 0; i < paths.Count; i++)
+            if (path.Contains(node))
             {
-                var newpath = new List<string>();
-                foreach(var p in paths[i])
+                path.Add(node);
+                var errorPath = path.Select(x => x.Name).ToList<string>();
+                throw new PvcCircularDependencyException(errorPath, "A circular dependency was found");
+            }
+            path.Add(node);
+            foreach(var neighbor in node.Neighbors)
+            {
+                var newPath = new List<Node>(path);
+                FindCircularPath(newPath, neighbor.Value);
+            }
+        }
+
+        private void GraphToHashSet(HashSet<Node> found, Node node)
+        {
+            if (found.Contains(node))
+            {
+                // This is a circular path. Find the circular path and throw it
+                var path = new List<Node>();
+                FindCircularPath(path, GetOrAddNode(getPathSource));
+            }
+            found.Add(node);
+            foreach(var neighbor in node.Neighbors)
+            {
+                GraphToHashSet(found, neighbor.Value);
+            }
+        }
+
+        private Dictionary<string, Node> FilterMap(Node startNode)
+        {
+            var filteredMap = new Dictionary<string, Node>(this.map);
+            var foundNodes = new HashSet<Node>();
+            GraphToHashSet(foundNodes, startNode);
+
+            foreach(var i in filteredMap.ToList())
+            {
+                if (!foundNodes.Contains(i.Value))
+                    filteredMap.Remove(i.Key);
+            }
+
+            return filteredMap;
+        }
+
+        private List<List<string>> ExpandTiers(List<List<Node>> tiers)
+        {
+            var paths = new List<List<Node>>();
+            paths.Add(new List<Node>());
+
+            for (int i = 0; i < tiers.Count; i++ )
+            {
+                foreach(var path in paths.ToList())
                 {
-                    if (p.Contains('\t'))
+                    if (tiers[i].Count == 1)
                     {
-                        foreach (var splitpath in p.Split('\t'))
-                        {
-                            newpath.Add(splitpath);    
-                        }
+                        path.Add(tiers[i][0]);
+                    }
+                    else if (tiers[i].Count > 4) // Avoid crazy factorial expansion.
+                    {
+                        path.AddRange(tiers[i]);
                     }
                     else
                     {
-                        newpath.Add(p);
+                        paths.Remove(path);
+                        var permutations = new List<List<Node>>();
+                        GetPermutations(path, permutations, tiers[i], tiers[i].Count);
+                        paths.AddRange(permutations);
                     }
                 }
-                newpath.Reverse();
-                paths[i] = newpath;
             }
+
+            var stringPaths = NodeToStringPaths(paths);
+            return stringPaths;
         }
 
-        private void RemoveShortPaths(List<List<string>> paths)
+        private void GetPermutations(List<Node> basePath, List<List<Node>> permutations, List<Node> tier, int n)
         {
-            int maxlength = 0;
-            foreach(var path in paths.ToList())
-            {
-                if (path.Count < maxlength)
-                    paths.Remove(path);
-                else
-                    maxlength = path.Count;
-            }
-            foreach(var path in paths.ToList())
-            {
-                if (path.Count < maxlength)
-                    paths.Remove(path);
-            }
-        }
+            // Heap's algorithm - http://en.wikipedia.org/wiki/Heap's_algorithm
 
-        private void BuildPaths(
-            PvcDependencyNode node,
-            List<string> currentPath,
-            HashSet<string> inCurrentPath,
-            List<List<string>> paths,
-            List<PvcDependencyNode> nextNodes)
-        {
-            // Stop on circular dependencies.
-            if (inCurrentPath.Contains(node.Name))
-                return;
-
-            currentPath.Add(node.Name);
-            inCurrentPath.Add(node.Name);
-
-            if (node.Neighbors.Count() == 0)
+            Node swap;
+            if (n == 1)
             {
-                if (nextNodes.Count() == 0)
-                    return;
-
-                AddNeighbors(node, nextNodes, currentPath, inCurrentPath, paths, nextNodes);
-            }
-            else if (node.Neighbors.Count() == 1)
-            {
-                var neighbor = node.Neighbors.First().Value;
-                BuildPaths(neighbor, currentPath, inCurrentPath, paths, nextNodes);
-            }
-            else if (node.Neighbors.Count() <= 4)
-            {
-                // Add every possible sort of neighbors
-                var neighbors = node.Neighbors.Values.ToList();
-                AddNeighbors(node, neighbors, currentPath, inCurrentPath, paths, nextNodes);
+                var newPath = new List<Node>(basePath);
+                newPath.AddRange(tier);
+                permutations.Add(newPath);
             }
             else
             {
-                AddAndGroupNeighbors(node, currentPath, inCurrentPath, paths, nextNodes);
+                for (int i = 0; i < n; i++)
+                {
+                    GetPermutations(basePath, permutations, tier, n - 1);
+                    if (n % 2 == 1)
+                    {
+                        swap = tier[0];
+                        tier[0] = tier[n - 1];
+                    }
+                    else
+                    {
+                        swap = tier[i];
+                        tier[i] = tier[n - 1];
+                    }
+                    tier[n - 1] = swap;
+                }
             }
         }
 
-        private void AddAndGroupNeighbors(
-            PvcDependencyNode node,
-            List<string> currentPath,
-            HashSet<string> inCurrentPath,
-            List<List<string>> paths,
-            List<PvcDependencyNode> nextNodes)
+        private List<List<string>> NodeToStringPaths(List<List<Node>> nodePaths)
         {
-            // 5+ dependencies on a single thing makes the graph factorial-explode.
-            // Sacrifice parallelism on this and instead treat it like a single thing.
-
-            var fakeNodeName = string.Join("\t", node.Neighbors.Values.Select(n => n.Name).ToList());
-            var fakeNode = new PvcDependencyNode(fakeNodeName);
-            foreach(var neighbor in node.Neighbors.Values)
+            var paths = new List<List<string>>();
+            foreach(var nodePath in nodePaths)
             {
-                inCurrentPath.Add(neighbor.Name);
-                fakeNode.Neighbors = fakeNode.Neighbors
-                    .Union(neighbor.Neighbors)
-                    .ToDictionary(k => k.Key, k => k.Value);
+                var path = new List<string>();
+                foreach(var node in nodePath)
+                {
+                    path.Add(node.Name);
+                }
+                paths.Add(path);
             }
-
-            BuildPaths(fakeNode, currentPath, inCurrentPath, paths, nextNodes);
+            return paths;
         }
 
-        private void AddNeighbors(
-            PvcDependencyNode node,
-            List<PvcDependencyNode> neighbors,
-            List<string> currentPath,
-            HashSet<string> inCurrentPath,
-            List<List<string>> paths,
-            List<PvcDependencyNode> nextNodes)
+        private List<List<Node>> BuildTiers(Dictionary<string, Node> filteredMap)
         {
-            var currentPathAtStart = new List<string>(currentPath);
-            var inCurrentPathAtStart = new HashSet<string>(inCurrentPath);
-            var first = true;
+            var nodesToAdd = filteredMap.Values.ToList();
+            var endNodes = FindEndNodes(filteredMap);
+            var tiers = new List<List<Node>>();
+            tiers.Add(endNodes);
+            nodesToAdd.RemoveAll((x) => endNodes.Contains(x));
 
-            foreach (var neighbor in neighbors)
+            var added = new HashSet<Node>(endNodes);
+
+            var tier = 0;
+            while (nodesToAdd.Count > 0)
             {
-                var newNextNodes = new List<PvcDependencyNode>(neighbors);
-                var existingNextNodes = new List<PvcDependencyNode>(nextNodes);
-                newNextNodes.RemoveAll(n => n == neighbor);
-                existingNextNodes.RemoveAll(n => n == neighbor);
-
-                foreach (var nextNode in existingNextNodes)
+                var tierNodes = new List<Node>();
+                foreach (var node in tiers[tier])
                 {
-                    if (!newNextNodes.Contains(nextNode))
-                        newNextNodes.Add(nextNode);
+                    foreach (var parent in node.NeighborsOf)
+                    {
+                        if (!added.Contains(parent.Value))
+                        {
+                            var allDepsAdded = true;
+                            foreach(var neighbor in parent.Value.Neighbors)
+                            {
+                                if (!added.Contains(neighbor.Value))
+                                {
+                                    allDepsAdded = false;
+                                    break;
+                                }
+                            }
+                            if (allDepsAdded)
+                            {
+                                tierNodes.Add(parent.Value);
+                                added.Add(parent.Value);
+                                nodesToAdd.Remove(parent.Value);
+                            }
+                        }
+                    }
                 }
-
-                List<string> newPath;
-                HashSet<string> inNewPath;
-                if (first)
-                {
-                    // Use the existing path
-                    newPath = currentPath;
-                    inNewPath = inCurrentPath;
-                    first = false;
-                }
-                else
-                {
-                    // Add a new path
-                    newPath = new List<string>(currentPathAtStart);
-                    inNewPath = new HashSet<string>(inCurrentPathAtStart);
-                    paths.Add(newPath);
-                }
-                BuildPaths(neighbor, newPath, inNewPath, paths, newNextNodes);
+                tiers.Add(tierNodes);
+                tier++;
             }
+
+            return tiers;
         }
 
-        private class PvcDependencyNode
+        private List<Node> FindEndNodes(Dictionary<string,Node> filteredMap)
+        {
+            var endNodes = new List<Node>();
+
+            foreach(var node in filteredMap)
+            {
+                if (node.Value.Neighbors.Count == 0 && node.Value.NeighborsOf.Count >= 0)
+                    endNodes.Add(node.Value);
+            }
+
+            return endNodes;
+        }
+
+
+        private class Node
         {
             public string Name;
-            public Dictionary<string, PvcDependencyNode> Neighbors;
+            public Dictionary<string, Node> Neighbors;
+            public Dictionary<string, Node> NeighborsOf;
 
-            public PvcDependencyNode(string name)
+            public Node(string name)
             {
                 Name = name;
-                Neighbors = new Dictionary<string, PvcDependencyNode>();
+                Neighbors = new Dictionary<string, Node>();
+                NeighborsOf = new Dictionary<string, Node>();
             }
         }
     }
