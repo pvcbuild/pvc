@@ -41,6 +41,7 @@
     <Compile Include="Lib\TimeSpanHumanizeExtensions.cs" />
     <Compile Include="Lib\Minimatch.cs" />
     <Compile Include="Pvc.cs" />
+    <Compile Include="PvcCircularDependencyException.cs" />
     <Compile Include="PvcConsole.cs" />
     <Compile Include="PvcDependencyGraph.cs" />
     <Compile Include="PvcException.cs" />
