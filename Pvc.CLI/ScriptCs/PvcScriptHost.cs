@@ -19,6 +19,27 @@ namespace Pvc.CLI
 
         public PvcCore.Pvc pvc { get { return PVCInstance; } }
 
+        public PvcCore.PvcDelayedPipe Source(params string[] inputs)
+        {
+            var delayedPipe = new PvcCore.PvcDelayedPipe();
+            delayedPipe.Stack.Add(() => pvc.Source(inputs));
+
+            return delayedPipe;
+        }
+
+        public PvcCore.PvcDelayedPipe Plugin(Func<IEnumerable<PvcCore.PvcStream>, IEnumerable<PvcCore.PvcStream>> plugin)
+        {
+            var delayedPipe = new PvcCore.PvcDelayedPipe();
+            delayedPipe.Stack.Add(() => plugin);
+
+            return delayedPipe;
+        }
+
+        public PvcCore.PvcTask Task(string name, PvcCore.PvcDelayedPipe delayedPipe)
+        {
+            return pvc.Task(name, () => delayedPipe.ExecuteStack());
+        }
+
         public static void RunTask(string taskName)
         {
             PVCInstance.Start(taskName);

@@ -262,5 +262,23 @@ namespace PvcCore
         {
             resetStreams.ToList().ForEach(x => x.ResetStreamPosition());
         }
+
+        // operator overloading!
+        public static PvcDelayedPipe operator &(PvcPipe pipe, PvcPlugins.PvcPlugin plugin)
+        {
+            var delayedPipe = new PvcDelayedPipe();
+            delayedPipe.Stack.Add(() => plugin);
+
+            return delayedPipe;
+        }
+
+        // This is effectively a switch to a new pipe (usually via a new Source command)
+        public static PvcDelayedPipe operator &(PvcPipe pipe1, PvcPipe pipe2)
+        {
+            var delayedPipe = new PvcDelayedPipe();
+            delayedPipe.Stack.Add(() => pipe2);
+
+            return delayedPipe;
+        }
     }
 }

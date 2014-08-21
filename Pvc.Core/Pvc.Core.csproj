@@ -42,6 +42,7 @@
     <Compile Include="Lib\Minimatch.cs" />
     <Compile Include="Pvc.cs" />
     <Compile Include="PvcConsole.cs" />
+    <Compile Include="PvcDelayedPipe.cs" />
     <Compile Include="PvcDependencyGraph.cs" />
     <Compile Include="PvcException.cs" />
     <Compile Include="PvcPlugin.cs" />
