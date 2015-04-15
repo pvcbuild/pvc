@@ -54,6 +54,11 @@ namespace PvcCore
             return new PvcPipe().Source(inputs);
         }
 
+        public PvcPipe Source(string input)
+        {
+            return new PvcPipe().Source(new[] { input });
+        }
+
         public void Start(string taskName)
         {
             if (this.LoadedTasks.FirstOrDefault(x => x.taskName == taskName) == null)
