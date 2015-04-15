@@ -12,6 +12,7 @@ namespace PvcCore
     public class PvcConsole
     {
         public static Dictionary<int, string> CurrentTaskByThread = new Dictionary<int, string>();
+        public static string Test = "";
 
         public static string ThreadTask
         {

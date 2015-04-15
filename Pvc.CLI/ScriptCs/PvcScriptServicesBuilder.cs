@@ -1,6 +1,6 @@
-﻿using Common.Logging;
-using ScriptCs.Contracts;
+﻿using ScriptCs.Contracts;
 using ScriptCs.Hosting;
+using ScriptCs.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;

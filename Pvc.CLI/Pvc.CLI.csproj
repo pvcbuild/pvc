@@ -59,6 +59,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ScriptCs\PvcFileSystem.cs" />
+    <Compile Include="ScriptCs\PvcLogger.cs" />
     <Compile Include="ScriptCs\PvcPackageContainer.cs" />
     <Compile Include="ScriptCs\PvcScriptHost.cs" />
     <Compile Include="ScriptCs\PvcScriptServicesBuilder.cs" />

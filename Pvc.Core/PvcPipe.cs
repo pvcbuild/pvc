@@ -233,6 +233,7 @@ namespace PvcCore
                 .Select(x => new { RelativePath = PvcUtil.PathRelativeToCurrentDirectory(x), FullPath = Path.GetFullPath(x) })
                 .Select(x => new PvcStream(() => new FileStream(x.FullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)).As(x.RelativePath, x.FullPath));
 
+
             this.streams = this.streams.Concat(streams);
             return this;
         }

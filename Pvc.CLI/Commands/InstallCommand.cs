@@ -33,11 +33,11 @@ namespace Pvc.CLI.Commands
 
         internal override void Execute(string[] args, Dictionary<string, string> flags)
         {
-            var logger = new Common.Logging.Simple.ConsoleOutLogger("install", LogLevel.Debug, false, false, false, "");
             var console = new ScriptCs.Hosting.ScriptConsole();
+            var logger = new PvcConsoleLogger();
             var services = new PvcScriptServicesBuilder(console, logger);
-
-            var initServices = new ScriptCs.Hosting.InitializationServices(logger);
+            
+            var initServices = new ScriptCs.Hosting.InitializationServices(services.InitializationServices.Logger);
 
             var installationProvider = services.InitializationServices.GetInstallationProvider();
             installationProvider.Initialize();

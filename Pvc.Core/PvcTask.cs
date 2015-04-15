@@ -14,6 +14,10 @@ namespace PvcCore
         internal readonly Action<Action> asyncTaskAction = null;
         internal IEnumerable<string> dependentTaskNames = null;
 
+        public string Name { get { return taskName; } }
+
+        public IEnumerable<string> DependentTasks { get { return dependentTaskNames; } }
+
         public PvcTask(string taskName, Action taskAction)
         {
             this.taskName = taskName;

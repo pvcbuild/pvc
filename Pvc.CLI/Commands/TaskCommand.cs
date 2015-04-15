@@ -12,6 +12,7 @@ using PvcPlugins;
 using ScriptCs.Contracts;
 using ScriptCs;
 using ScriptCs.Hosting;
+using Newtonsoft.Json;
 
 namespace Pvc.CLI.Commands
 {
@@ -19,7 +20,7 @@ namespace Pvc.CLI.Commands
     {
         public TaskCommand()
         {
-            var logger = new Common.Logging.Simple.NoOpLogger();
+            var logger = new PvcNullLogger();
             var console = new ScriptCs.Hosting.ScriptConsole();
             var servicesBuilder = new PvcScriptServicesBuilder(console, logger)
                 .ScriptName("TaskCommand")
@@ -72,12 +73,24 @@ namespace Pvc.CLI.Commands
                 var _fileSystem = this.ServicesBuilder.InitializationServices.GetFileSystem();
                 if (File.Exists(_fileSystem.PackagesFile) && !Directory.Exists(_fileSystem.PackagesFolder))
                 {
-                    Console.WriteLine("Packages folder missing. Restoring from {0} ...", _fileSystem.PackagesFile);
+                    if (taskName != ExportTasksName) Console.WriteLine("Packages folder missing. Restoring from {0} ...", _fileSystem.PackagesFile);
                     new InstallCommand().Execute(new string[] { }, new Dictionary<string, string>());
                 }
 
+                if (taskName == ExportTasksName)
+                {
+                    BuildScriptHost(pvcfile);
+                    Console.Write(JsonConvert.SerializeObject(PvcScriptHost.PVCInstance.LoadedTasks.Select(x => new
+                    {
+                        Name = x.Name,
+                        DependentTasks = x.DependentTasks
+                    })));
+
+                    return;
+                }
+
                 Console.WriteLine("Preparing to execute task '{0}' and dependencies from {1}", taskName.Magenta(), pvcfile.Cyan());
-                this.ExecuteScript(pvcfile, taskName);
+                ExecuteScript(pvcfile, taskName);
             }
             catch (Exception ex)
             {
@@ -94,11 +107,14 @@ namespace Pvc.CLI.Commands
                     stackTrace = ex.InnerException.StackTrace;
                 }
 
-                var stackTraceLines = Regex.Split(stackTrace, "(\n|\r|\r\n)").Select(x => x.Trim());
-                foreach (var stackTraceLine in stackTraceLines)
+                if (stackTrace != null)
                 {
-                    if (stackTraceLine.Length > 0)
-                        Console.WriteLine(stackTraceLine.DarkGrey());
+                    var stackTraceLines = Regex.Split(stackTrace, "(\n|\r|\r\n)").Select(x => x.Trim());
+                    foreach (var stackTraceLine in stackTraceLines)
+                    {
+                        if (stackTraceLine.Length > 0)
+                            Console.WriteLine(stackTraceLine.DarkGrey());
+                    }
                 }
 
                 var threadTask = PvcConsole.ThreadTask;
@@ -110,14 +126,29 @@ namespace Pvc.CLI.Commands
 
         private void ExecuteScript(string pvcfile, string taskName)
         {
-            var currentDirectory = Directory.GetCurrentDirectory();
             Console.Write("{0} Loading pvc plugins and runtimes ...".DarkGrey(), PvcConsole.Tag);
+            BuildScriptHost(pvcfile);
+            
+            Console.Write(" [".Grey() + "done".DarkGrey() + "]".Grey() + Environment.NewLine);
+            PvcScriptHost.RunTask(taskName);
+
+            if (PvcWatcher.Items.Count > 0)
+            {
+                Console.WriteLine("");
+                Console.WriteLine("Monitoring {0} for changes", "pipeline".Magenta());
+
+                var currentDirectory = Directory.GetCurrentDirectory();
+                PvcWatcher.ListenForChanges(currentDirectory);
+            }
+        }
+
+        private void BuildScriptHost(string pvcfile)
+        {
+            var currentDirectory = Directory.GetCurrentDirectory();
             var services = this.ServicesBuilder.Build();
 
             var assemblies = services.AssemblyResolver.GetAssemblyPaths(currentDirectory).Where(x => !x.EndsWith("Pvc.Core.dll")).ToList();
             var scriptPacks = services.ScriptPackResolver.GetPacks();
-            Console.Write(" [".Grey() + "done".DarkGrey() + "]".Grey() + Environment.NewLine);
-
             services.Executor.Initialize(assemblies, scriptPacks);
 
             // Find test assemblies
@@ -141,25 +172,17 @@ namespace Pvc.CLI.Commands
             var result = services.Executor.ExecuteScript(pvcScript);
 
             if (result.CompileExceptionInfo != null)
-                throw result.CompileExceptionInfo.SourceException;
+                throw new PvcException(result.CompileExceptionInfo.SourceException);
 
             if (result.ExecuteExceptionInfo != null)
             {
                 if (result.ExecuteExceptionInfo.SourceException.GetType() == typeof(PvcException))
-                    throw result.ExecuteExceptionInfo.SourceException.InnerException ?? result.ExecuteExceptionInfo.SourceException;
+                    throw new PvcException(result.ExecuteExceptionInfo.SourceException.InnerException ?? result.ExecuteExceptionInfo.SourceException);
                 else
-                    throw result.ExecuteExceptionInfo.SourceException;
-            }
-
-            PvcScriptHost.RunTask(taskName);
-            
-            if (PvcWatcher.Items.Count > 0)
-            {
-                Console.WriteLine("");
-                Console.WriteLine("Monitoring {0} for changes", "pipeline".Magenta());
-
-                PvcWatcher.ListenForChanges(currentDirectory);
+                    throw new PvcException(result.ExecuteExceptionInfo.SourceException);
             }
         }
+
+        private static string ExportTasksName = "__exportTasks";
     }
 }

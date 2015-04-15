@@ -1,9 +1,9 @@
-﻿using Common.Logging;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using NuGet;
 using ScriptCs;
 using ScriptCs.Contracts;
 using ScriptCs.Hosting.Package;
+using ScriptCs.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -19,6 +19,7 @@ namespace Pvc.CLI
         public PvcPackageContainer(IFileSystem fileSystem, ILog logger)
             : base(fileSystem, logger)
         {
+            _fileSystem = fileSystem;
         }
 
         public override void CreatePackageFile()
@@ -41,7 +42,7 @@ namespace Pvc.CLI
             File.WriteAllText(packagesFile, configFile.ToString());
         }
 
-        public override IEnumerable<IPackageReference> FindPackageReferences(string path)
+        public override IEnumerable<IPackageReference> FindReferences(string path)
         {
             // if config file exists, we use those packages only
             if (_fileSystem.FileExists(path))
@@ -58,5 +59,7 @@ namespace Pvc.CLI
                 yield break;
             }
         }
+
+        private readonly IFileSystem _fileSystem;
     }
 }
