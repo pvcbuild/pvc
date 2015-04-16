@@ -181,9 +181,20 @@ namespace Edokan.KaiZen.Colors
                 Console.ForegroundColor = ColorDict[val];
         }
 
-        public static void Install()
+        public static void Install(bool convertANSI = true)
         {
-            Console.SetOut(new EscapeSequencer(Console.Out));
+            if (convertANSI)
+            {
+                Console.SetOut(new EscapeSequencer(Console.Out));
+            }
+            else
+            {
+                var stdout = Console.OpenStandardOutput();
+                Console.SetOut(new StreamWriter(stdout)
+                {
+                    AutoFlush = true
+                });
+            }
         }
 
         public override Encoding Encoding

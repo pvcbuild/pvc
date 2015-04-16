@@ -21,12 +21,10 @@ namespace Pvc.CLI
             this.commands = commands.Concat(new[] { new UsageCommand(this.commands) }).ToArray();
         }
 
-        public Action Parse(string[] args)
+        public Action Parse(Tuple<string[], Dictionary<string, string>> parsedArgs)
         {
-            var parseResults = new FlagsParser().Parse(args);
-
-            var flags = parseResults.Item2;
-            args = parseResults.Item1;
+            var args = parsedArgs.Item1;
+            var flags = parsedArgs.Item2;
 
             if (flags.ContainsKey("?"))
                 return () => new UsageCommand(commands).Execute(args, flags);

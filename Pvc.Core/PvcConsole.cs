@@ -43,9 +43,9 @@ namespace PvcCore
             }
         }
 
-        public static void Configure()
+        public static void Configure(bool convertANSI = true)
         {
-            Edokan.KaiZen.Colors.EscapeSequencer.Install();
+            Edokan.KaiZen.Colors.EscapeSequencer.Install(convertANSI);
         }
     }
 }

@@ -4,6 +4,7 @@ using System.IO;
 using Edokan.KaiZen.Colors;
 using System.Text.RegularExpressions;
 using System.Linq;
+using Pvc.CLI.Commands;
 
 namespace Pvc.CLI
 {
@@ -11,9 +12,10 @@ namespace Pvc.CLI
     {
         static void Main(string[] args)
         {
-            PvcConsole.Configure();
+            var parseResults = new FlagsParser().Parse(args);
+            PvcConsole.Configure(!parseResults.Item2.ContainsKey("ansi"));
 
-            var task = new ArgumentHandler().Parse(args);
+            var task = new ArgumentHandler().Parse(parseResults);
             task();
         }
     }
